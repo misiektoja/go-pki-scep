@@ -1,5 +1,6 @@
 # Runs real SCEP peers against this module: sscep and the micromdm/scep client against the server
-# handler, and the client against the micromdm/scep server. The peers are built from pinned sources.
+# handler, and the client against the micromdm/scep server and EJBCA Community Edition. The peers
+# are built from pinned sources or run from images pinned by digest.
 # SCEP_INTEROP=required makes a test fail rather than skip when its peer is missing.
 name: Interop
 
@@ -23,6 +24,7 @@ env:
   # sscep v0.10.0
   SSCEP_COMMIT: b3f9798d56d0f6474b491204ff426d80fd4010a7
   MICROMDM_SCEP_VERSION: v2.3.0
+  EJBCA_IMAGE: keyfactor/ejbca-ce:9.6.3@sha256:ef574ed81c1e2bb335902f1097b09f9408fe32f2c3abbccfe80999d1c9b50164
   SCEP_INTEROP: required
 
 jobs:
@@ -123,3 +125,56 @@ jobs:
       - name: Show the server log
         if: failure()
         run: cat "$RUNNER_TEMP/scepserver.log"
+
+  ejbca-server:
+    permissions:
+      contents: read
+    name: Client against the EJBCA CE server
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SCEP_INTEROP_EJBCA_URL: http://127.0.0.1:8080/ejbca/publicweb/apply/scep/scep/pkiclient.exe
+      SCEP_INTEROP_EJBCA_CA: InteropSub
+    steps:
+      - name: Clone the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Start EJBCA
+        run: |
+          docker run -d --name ejbca -p 127.0.0.1:8080:8080 -e TLS_SETUP_ENABLED=true "$EJBCA_IMAGE"
+          for _ in $(seq 1 150); do
+            if curl -sf http://127.0.0.1:8080/ejbca/publicweb/healthcheck/ejbcahealth > /dev/null; then exit 0; fi
+            sleep 2
+          done
+          docker logs ejbca
+          exit 1
+
+      - name: Create the CAs, the SCEP alias and the end entities
+        run: |
+          ejbca() { docker exec ejbca /opt/keyfactor/bin/ejbca.sh "$@"; }
+          # SCEP needs an RSA CA. The CA the container creates at startup is ECDSA.
+          ejbca ca init --caname InteropRoot --dn "CN=Interop Root CA,O=Example" --tokenType soft --tokenPass null --keyspec 2048 --keytype RSA -v 3650 --policy null -s SHA256WithRSA
+          root_id=$(ejbca ca info --caname InteropRoot | sed -n 's/.*(main) CA ID: //p')
+          ejbca ca init --caname "$SCEP_INTEROP_EJBCA_CA" --dn "CN=Interop Sub CA,O=Example" --tokenType soft --tokenPass null --keyspec 2048 --keytype RSA -v 1825 --policy null -s SHA256WithRSA --signedby "$root_id"
+          # The alias defaults to CA mode, where the CSR common name names the end entity.
+          ejbca config scep addalias --alias scep
+          challenge=$(openssl rand -hex 16)
+          echo "::add-mask::$challenge"
+          for cn in go-scep-ejbca go-scep-ejbca-wrong go-scep-ejbca-none; do
+            ejbca ra addendentity --username "$cn" --dn "CN=$cn" --caname "$SCEP_INTEROP_EJBCA_CA" --type 1 --token USERGENERATED --password "$challenge" --certprofile ENDUSER --eeprofile EMPTY
+          done
+          echo "SCEP_INTEROP_EJBCA_CHALLENGE=$challenge" >> "$GITHUB_ENV"
+
+      - name: Run the client against EJBCA
+        run: make interop INTEROP_RUN=TestEJBCAServer
+
+      - name: Show the server log
+        if: failure()
+        run: docker logs ejbca 2>&1 | tail -300
