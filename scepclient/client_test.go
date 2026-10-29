@@ -432,7 +432,16 @@ func TestBusyRetry(t *testing.T) {
 	ca := testca.New(t, testca.Options{})
 	ts := newTestServer(t, ca, scepserver.Options{})
 	ctx := t.Context()
-	client := newClient(t, ts.URL, scepclient.Options{})
+	var mu sync.Mutex
+	var waits []time.Duration
+	client := newClient(t, ts.URL, scepclient.Options{OnBusy: func(answer *scepclient.HTTPError, delay time.Duration) {
+		mu.Lock()
+		defer mu.Unlock()
+		if answer.StatusCode != http.StatusServiceUnavailable {
+			t.Errorf("OnBusy got HTTP %d, want 503", answer.StatusCode)
+		}
+		waits = append(waits, delay)
+	}})
 	certs, err := client.GetCACert(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -445,11 +454,52 @@ func TestBusyRetry(t *testing.T) {
 	if got := len(ts.pkiMethods()); got != 3 {
 		t.Errorf("sent %d PKIOperation requests, want 3", got)
 	}
+	mu.Lock()
+	if !slices.Equal(waits, []time.Duration{10 * time.Millisecond, 10 * time.Millisecond}) {
+		t.Errorf("OnBusy waits = %v, want two of the busy delay", waits)
+	}
+	mu.Unlock()
 
 	noRetry := newClient(t, ts.URL, scepclient.Options{BusyRetries: -1})
 	ca.SetBusy(1)
 	if _, err := noRetry.Enroll(ctx, certs, enrollRequest(testca.NewRequester(t, "device-2", ""))); !isHTTPStatus(err, http.StatusServiceUnavailable) {
 		t.Errorf("Enroll without retries: error = %v, want HTTP 503", err)
+	}
+}
+
+// TestBusyCapabilities covers a server that stays busy for GetCACaps. The client reports the busy
+// answer instead of taking it for a server without capabilities and falling back to GET.
+func TestBusyCapabilities(t *testing.T) {
+	t.Parallel()
+	ca := testca.New(t, testca.Options{})
+	handler, err := scepserver.NewHandler(ca, scepserver.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var pkiOperations atomic.Int32
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Query().Get("operation") {
+		case "GetCACaps":
+			http.Error(w, "busy", http.StatusServiceUnavailable)
+		case "PKIOperation":
+			pkiOperations.Add(1)
+			handler.ServeHTTP(w, r)
+		default:
+			handler.ServeHTTP(w, r)
+		}
+	}))
+	t.Cleanup(ts.Close)
+	client := newClient(t, ts.URL, scepclient.Options{BusyRetries: -1})
+	certs, err := client.GetCACert(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.Enroll(t.Context(), certs, enrollRequest(testca.NewRequester(t, "device-1", "")))
+	if !isHTTPStatus(err, http.StatusServiceUnavailable) {
+		t.Errorf("Enroll while GetCACaps is busy: error = %v, want HTTP 503", err)
+	}
+	if n := pkiOperations.Load(); n != 0 {
+		t.Errorf("sent %d PKIOperation requests without the capabilities, want none", n)
 	}
 }
 
@@ -521,18 +571,18 @@ func TestServerQuirks(t *testing.T) {
 	if err != nil || !slices.Equal(caps, scepclient.Capabilities{"AES", "POSTPKIOperation"}) {
 		t.Errorf("GetCACaps = %q, %v", caps, err)
 	}
-	if _, err := client.GetCACert(t.Context()); err == nil {
-		t.Error("GetCACert accepted an empty answer")
+	if _, err := client.GetCACert(t.Context()); !errors.Is(err, scepclient.ErrEmptyResponse) {
+		t.Errorf("GetCACert with an empty answer: error = %v, want ErrEmptyResponse", err)
 	}
-	if _, err := client.GetCACertChain(t.Context()); err == nil || !strings.Contains(err.Error(), "empty") {
-		t.Errorf("GetCACertChain with an empty answer: error = %v", err)
+	if _, err := client.GetCACertChain(t.Context()); !errors.Is(err, scepclient.ErrEmptyResponse) {
+		t.Errorf("GetCACertChain with an empty answer: error = %v, want ErrEmptyResponse", err)
 	}
 	current, err := scepclient.SortCACertificates([]*x509.Certificate{testca.New(t, testca.Options{}).Certificate})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := client.GetNextCACert(t.Context(), current); err == nil || !strings.Contains(err.Error(), "empty") {
-		t.Errorf("GetNextCACert with an empty answer: error = %v", err)
+	if _, err := client.GetNextCACert(t.Context(), current); !errors.Is(err, scepclient.ErrEmptyResponse) {
+		t.Errorf("GetNextCACert with an empty answer: error = %v, want ErrEmptyResponse", err)
 	}
 }
 
