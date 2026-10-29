@@ -69,6 +69,10 @@ type Options struct {
 	// request, which is always accepted. The zero value accepts AES-CBC and DES-EDE3-CBC. Add
 	// pkcs7.DESCBC for servers that answer with single DES whatever the request used.
 	Decrypt pkcs7.DecryptOptions
+
+	// OnBusy, when set, is called before each wait that follows an HTTP 503 answer, with that answer
+	// and the delay, so a caller can tell its user why the request pauses.
+	OnBusy func(answer *HTTPError, delay time.Duration)
 }
 
 // Client talks to one SCEP URL. It is safe for concurrent use.
@@ -79,6 +83,7 @@ type Client struct {
 	limit       int64
 	busyRetries int
 	busyDelay   time.Duration
+	onBusy      func(*HTTPError, time.Duration)
 	decrypt     []pkcs7.ContentEncryptionAlgorithm
 
 	mu   sync.Mutex
@@ -105,6 +110,7 @@ func New(serverURL string, opts Options) (*Client, error) {
 		limit:       opts.MaxResponseBytes,
 		busyRetries: opts.BusyRetries,
 		busyDelay:   opts.BusyDelay,
+		onBusy:      opts.OnBusy,
 		decrypt:     opts.Decrypt.ContentEncryptionAlgorithms,
 	}
 	if len(c.decrypt) == 0 {
@@ -127,6 +133,11 @@ func New(serverURL string, opts Options) (*Client, error) {
 	}
 	return c, nil
 }
+
+// ErrEmptyResponse reports a 200 OK answer without a body to GetCACert, GetCACertChain or
+// GetNextCACert. Some servers answer that way for an operation they lack or for a missing or
+// unknown CA name.
+var ErrEmptyResponse = errors.New("scepclient: the server sent an empty answer")
 
 // HTTPError is an HTTP answer other than 200 OK.
 type HTTPError struct {
@@ -175,7 +186,8 @@ func (c *Client) GetCACaps(ctx context.Context) (Capabilities, error) {
 }
 
 // capabilities returns the cached capabilities and fetches them once. A server that answers
-// GetCACaps with an HTTP error is treated as listing none.
+// GetCACaps with an HTTP error is treated as listing none, except for HTTP 503, which says the
+// server is busy rather than that it lacks the operation.
 func (c *Client) capabilities(ctx context.Context) (Capabilities, error) {
 	c.mu.Lock()
 	caps, got := c.caps, c.got
@@ -184,7 +196,7 @@ func (c *Client) capabilities(ctx context.Context) (Capabilities, error) {
 		return caps, nil
 	}
 	caps, err := c.GetCACaps(ctx)
-	if _, ok := errors.AsType[*HTTPError](err); ok {
+	if httpErr, ok := errors.AsType[*HTTPError](err); ok && httpErr.StatusCode != http.StatusServiceUnavailable {
 		c.mu.Lock()
 		c.caps, c.got = nil, true
 		c.mu.Unlock()
@@ -201,7 +213,7 @@ func (c *Client) GetCACert(ctx context.Context) (*CACertificates, error) {
 		return nil, err
 	}
 	if len(body) == 0 {
-		return nil, errors.New("scepclient: the GetCACert answer is empty")
+		return nil, fmt.Errorf("%w to GetCACert, so it may need a CA name", ErrEmptyResponse)
 	}
 	certs, err := parseCACertBody("GetCACert", body, header.Get("Content-Type"))
 	if err != nil {
@@ -220,7 +232,7 @@ func (c *Client) GetCACertChain(ctx context.Context) ([]*x509.Certificate, error
 		return nil, err
 	}
 	if len(body) == 0 {
-		return nil, errors.New("scepclient: the GetCACertChain answer is empty, so the server lacks it or needs a CA name")
+		return nil, fmt.Errorf("%w to GetCACertChain, so it lacks the operation or needs a CA name", ErrEmptyResponse)
 	}
 	return parseCACertBody("GetCACertChain", body, header.Get("Content-Type"))
 }
@@ -269,7 +281,7 @@ func (c *Client) GetNextCACert(ctx context.Context, current *CACertificates) (*C
 	}
 	if len(body) == 0 {
 		// Some servers answer operations they do not support with an empty 200 OK.
-		return nil, errors.New("scepclient: the GetNextCACert answer is empty, so the server likely does not support it")
+		return nil, fmt.Errorf("%w to GetNextCACert, so it likely lacks the operation", ErrEmptyResponse)
 	}
 	certs, err := scep.ParseSignedCertificates(body, current.Signers)
 	if err != nil {
@@ -356,7 +368,11 @@ func (c *Client) do(ctx context.Context, newRequest func() (*http.Request, error
 		if delay == 0 {
 			delay = c.busyDelay
 		}
-		if err := sleep(ctx, min(delay, maxBusyDelay)); err != nil {
+		delay = min(delay, maxBusyDelay)
+		if c.onBusy != nil {
+			c.onBusy(httpErr, delay)
+		}
+		if err := sleep(ctx, delay); err != nil {
 			return nil, nil, errors.Join(httpErr, err)
 		}
 	}
