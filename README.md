@@ -48,6 +48,7 @@ before v1.0.0, as [CHANGELOG.md](CHANGELOG.md) records.
 | GetCACaps | Lists the capabilities, derived from the options or replaced by them | Fetched once and used to pick POST, the digest and the cipher |
 | GetCACert | One DER certificate, or the CA and RA certificates in a certificate-only message | Sorts the answer into the CA, the encryption recipients and the allowed CertRep signers |
 | GetNextCACert | The next CA certificates, signed by the current CA or RA, when the CA implements it | Verifies the signature against the current certificates |
+| GetCACertChain | The CA certificate and its issuers up to the root in a certificate-only message, when the CA implements it | Returns the chain in server order |
 | PKIOperation over GET and POST | Both, with a size limit | POST when the server lists POSTPKIOperation, GET otherwise |
 | PKCSReq, RenewalReq and UpdateReq | Passed to the CA, which issues, keeps the request pending or refuses it | `Enroll` sends PKCSReq and RenewalReq |
 | CertPoll | Passed to the CA | `Poll`, and `EnrollAndWait`, which polls while the answer is PENDING |
@@ -55,6 +56,9 @@ before v1.0.0, as [CHANGELOG.md](CHANGELOG.md) records.
 
 The `scep` package handles every RFC 8894 message type in both directions: building and parsing
 requests, decrypting their content and answering with SUCCESS, PENDING or FAILURE.
+
+GetCACertChain is not part of RFC 8894. Some CAs still serve it for older clients. Its answer
+carries no RA certificates, so clients enroll with the GetCACert answer.
 
 ## Getting started
 
