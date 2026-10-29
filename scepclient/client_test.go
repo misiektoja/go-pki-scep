@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"io"
+	"maps"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -758,4 +759,83 @@ func issueSubCA(t *testing.T, root *testca.CA) *x509.Certificate {
 func isHTTPStatus(err error, status int) bool {
 	var httpErr *scepclient.HTTPError
 	return errors.As(err, &httpErr) && httpErr.StatusCode == status
+}
+
+// pkiStatusAsHTTPStatus answers a PENDING CertRep with HTTP 202 and a FAILURE CertRep with HTTP
+// 400, as OpenXPKI does.
+func pkiStatusAsHTTPStatus(ca *testca.CA, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rec := httptest.NewRecorder()
+		next.ServeHTTP(rec, r)
+		status := rec.Code
+		if r.URL.Query().Get("operation") == "PKIOperation" && status == http.StatusOK {
+			rep, err := scep.ParsePKIMessage(rec.Body.Bytes(), scep.ParseOptions{Signers: []*x509.Certificate{ca.Certificate}})
+			switch {
+			case err != nil:
+			case rep.PKIStatus == scep.PENDING:
+				status = http.StatusAccepted
+			case rep.PKIStatus == scep.FAILURE:
+				status = http.StatusBadRequest
+			}
+		}
+		maps.Copy(w.Header(), rec.Header())
+		w.WriteHeader(status)
+		_, _ = w.Write(rec.Body.Bytes())
+	})
+}
+
+// TestCertRepWithErrorStatus covers a server that sends PENDING and FAILURE CertReps with an HTTP
+// error status, and answers without a CertRep that must stay an HTTPError.
+func TestCertRepWithErrorStatus(t *testing.T) {
+	t.Parallel()
+	ca := testca.New(t, testca.Options{Password: "secret", Manual: true, ApproveAfterPolls: 2})
+	handler, err := scepserver.NewHandler(ca, scepserver.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ts := httptest.NewServer(pkiStatusAsHTTPStatus(ca, handler))
+	t.Cleanup(ts.Close)
+	client := newClient(t, ts.URL, scepclient.Options{})
+	certs, err := client.GetCACert(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	defer cancel()
+	req := enrollRequest(testca.NewRequester(t, "device-1", "secret"))
+	if res, err := client.Enroll(ctx, certs, req); err != nil || res.Status != scep.PENDING {
+		t.Fatalf("Enroll with HTTP 202 = %v, %v, want PENDING", res, err)
+	}
+	if res, err := client.EnrollAndWait(ctx, certs, req, 10*time.Millisecond); err != nil || res.Status != scep.SUCCESS {
+		t.Fatalf("EnrollAndWait with HTTP 202 = %v, %v, want SUCCESS", res, err)
+	}
+	res, err := client.Enroll(ctx, certs, enrollRequest(testca.NewRequester(t, "device-2", "wrong")))
+	if err != nil || res.Status != scep.FAILURE || res.FailInfo != scep.BadRequest {
+		t.Errorf("Enroll with HTTP 400 = %v, %v, want FAILURE badRequest", res, err)
+	}
+
+	refusals := []struct {
+		name, contentType, body string
+	}{
+		{"text", "text/plain", "No password in request"},
+		{"broken pki-message", "application/x-pki-message", "not a pkiMessage"},
+	}
+	for _, tt := range refusals {
+		refusing := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Query().Get("operation") != "PKIOperation" {
+				handler.ServeHTTP(w, r)
+				return
+			}
+			w.Header().Set("Content-Type", tt.contentType)
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(tt.body))
+		}))
+		client := newClient(t, refusing.URL, scepclient.Options{})
+		_, err := client.Enroll(ctx, certs, enrollRequest(testca.NewRequester(t, "device-3", "secret")))
+		var httpErr *scepclient.HTTPError
+		if !errors.As(err, &httpErr) || httpErr.StatusCode != http.StatusBadRequest || httpErr.Body != tt.body {
+			t.Errorf("%s: Enroll error = %v, want HTTPError 400", tt.name, err)
+		}
+		refusing.Close()
+	}
 }
