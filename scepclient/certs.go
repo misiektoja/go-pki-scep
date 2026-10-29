@@ -2,6 +2,7 @@ package scepclient
 
 import (
 	"bytes"
+	"crypto/rsa"
 	"crypto/x509"
 	"errors"
 	"slices"
@@ -16,8 +17,9 @@ type CACertificates struct {
 	// and GetCRL name it as the issuer.
 	CA *x509.Certificate
 
-	// Recipients are the certificates requests are encrypted for: the RA certificates that allow
-	// key encipherment when an RA is present, else the CA certificate.
+	// Recipients are the certificates requests are encrypted for: the RSA RA certificates that
+	// allow key encipherment when an RA has one, else the CA certificate when its key is RSA. It
+	// is empty when no certificate has an RSA key, because SCEP encrypts with RSA key transport.
 	Recipients []*x509.Certificate
 
 	// Signers are the certificates allowed to sign CertRep messages: the RA certificates that
@@ -71,18 +73,25 @@ func SortCACertificates(certs []*x509.Certificate) (*CACertificates, error) {
 
 	sorted := &CACertificates{All: certs, CA: issuing}
 	for _, ra := range ras {
-		if ra.KeyUsage == 0 || ra.KeyUsage&(x509.KeyUsageKeyEncipherment|x509.KeyUsageDataEncipherment) != 0 {
+		encipherment := ra.KeyUsage == 0 || ra.KeyUsage&(x509.KeyUsageKeyEncipherment|x509.KeyUsageDataEncipherment) != 0
+		if encipherment && hasRSAKey(ra) {
 			sorted.Recipients = append(sorted.Recipients, ra)
 		}
 		if ra.KeyUsage == 0 || ra.KeyUsage&x509.KeyUsageDigitalSignature != 0 {
 			sorted.Signers = append(sorted.Signers, ra)
 		}
 	}
-	if len(sorted.Recipients) == 0 {
+	if len(sorted.Recipients) == 0 && hasRSAKey(issuing) {
 		sorted.Recipients = []*x509.Certificate{issuing}
 	}
 	sorted.Signers = append(sorted.Signers, issuing)
 	return sorted, nil
+}
+
+// hasRSAKey reports whether cert holds an RSA public key.
+func hasRSAKey(cert *x509.Certificate) bool {
+	_, ok := cert.PublicKey.(*rsa.PublicKey)
+	return ok
 }
 
 // issuedBy reports whether issuer's name and key identifier match those cert names as its issuer.

@@ -139,6 +139,11 @@ func New(serverURL string, opts Options) (*Client, error) {
 // unknown CA name.
 var ErrEmptyResponse = errors.New("scepclient: the server sent an empty answer")
 
+// ErrNoRSARecipient reports CA certificates without an RSA certificate to encrypt a request for.
+// SCEP encrypts requests with RSA key transport, so a CA with another key type needs an RSA RA
+// certificate.
+var ErrNoRSARecipient = errors.New("scepclient: the CA certificates hold no RSA certificate to encrypt the request for")
+
 // HTTPError is an HTTP answer other than 200 OK. A PKIOperation answer with that status that
 // carries a CertRep is parsed instead.
 type HTTPError struct {
@@ -445,8 +450,14 @@ func sleep(ctx context.Context, d time.Duration) error {
 // requestOptions returns the message options for a request to ca. A zero digest or cipher is
 // chosen from the server capabilities.
 func (c *Client) requestOptions(ctx context.Context, ca *CACertificates, signerCert *x509.Certificate, signerKey crypto.Signer, digest crypto.Hash, encryption pkcs7.EncryptOptions) (scep.RequestOptions, crypto.Decrypter, error) {
-	if ca == nil || ca.CA == nil || len(ca.Recipients) == 0 || len(ca.Signers) == 0 {
+	if ca == nil || ca.CA == nil || len(ca.Signers) == 0 {
 		return scep.RequestOptions{}, nil, errors.New("scepclient: the request needs sorted CA certificates")
+	}
+	// Checking here names the cause before a request leaves, where the CMS layer would only
+	// report an unsupported key.
+	notRSA := func(cert *x509.Certificate) bool { return !hasRSAKey(cert) }
+	if len(ca.Recipients) == 0 || slices.ContainsFunc(ca.Recipients, notRSA) {
+		return scep.RequestOptions{}, nil, ErrNoRSARecipient
 	}
 	if signerCert == nil || signerKey == nil {
 		return scep.RequestOptions{}, nil, errors.New("scepclient: the request needs a signer certificate and key")
