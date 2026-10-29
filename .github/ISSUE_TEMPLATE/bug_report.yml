@@ -1,0 +1,63 @@
+name: Bug report
+description: A device or server rejects a message, an operation fails or behavior does not match the documentation or RFC 8894
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not report a suspected vulnerability here. Follow [SECURITY.md](https://github.com/misiektoja/go-scep/blob/main/SECURITY.md) instead.
+
+        Never paste private keys, challenge passwords or messages captured from a production system into an issue. A request or answer made with a throwaway key is the most useful reproduction.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what you got instead. Cite the RFC 8894 section when the library deviates from it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: The operation, the calls and options you used, such as `scepserver.Options` or `scepclient.EnrollRequest`, and a captured message made with a throwaway key.
+      render: go
+    validations:
+      required: true
+
+  - type: textarea
+    id: error
+    attributes:
+      label: Error
+      description: The error the library returned or logged, or the error the peer reported.
+      render: shell
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: go-scep version
+      placeholder: v0.1.0 or commit
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Go version and peer
+      description: The device, client or CA on the other side and its version.
+      placeholder: go1.27.3, sscep 0.10.0
+    validations:
+      required: true
+
+  - type: input
+    id: algorithms
+    attributes:
+      label: Algorithms
+      description: The key type, digest and content cipher involved.
+      placeholder: RSA 2048, SHA-256, AES-128-CBC
+    validations:
+      required: false
