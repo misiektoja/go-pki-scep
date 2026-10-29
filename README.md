@@ -146,6 +146,7 @@ The Interop workflow runs these peers on every change:
 | sscep v0.10.0 | Against the handler: getcaps, getca, enroll with polling, getcert and getcrl |
 | micromdm/scep v2.3.0 client | Against the handler: enrollment with a challenge password |
 | micromdm/scep v2.3.0 server | The client enrolls, and a wrong challenge password is refused |
+| EJBCA CE 9.6.3 server | The client fetches the CA chain and enrolls. A used, wrong or missing password is refused |
 
 ## Documentation
 
