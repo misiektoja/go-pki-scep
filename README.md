@@ -114,7 +114,8 @@ certificate being renewed. `x509util.CreateCertificateRequest` adds the challeng
   the request, then passes the challenge password and the signer certificate to the CA.
 * **CSR signatures** are checked before the CA sees the request.
 * **Ciphers** default to AES-128-CBC. The handler and the client accept AES-CBC and DES-EDE3-CBC.
-  Single DES needs `Decrypt` in the options of either side.
+  Single DES needs `Decrypt` in the options of either side. The handler answers with the request
+  cipher unless `Options.ContentEncryption` sets one.
 * **Digests** default to SHA-256. MD5 signatures are refused unless `AllowMD5` is set.
 * **Sizes are bounded**: messages on the server, response bodies on the client and the Retry-After
   delay a server can ask for.
