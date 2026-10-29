@@ -66,6 +66,10 @@ type Options struct {
 	// follows the request digest, or SHA-256 when the request used another one.
 	Digest crypto.Hash
 
+	// ContentEncryption is the cipher of the pkiEnvelope in CertRep messages. The zero value
+	// follows the request cipher. Set it for clients that send one cipher but decrypt another.
+	ContentEncryption pkcs7.ContentEncryptionAlgorithm
+
 	// MaxMessageBytes bounds a PKIOperation message in bytes, before base64 encoding for GET. Zero
 	// selects DefaultMaxMessageBytes.
 	MaxMessageBytes int64
@@ -422,6 +426,7 @@ func (h *Handler) answer(w http.ResponseWriter, r *http.Request, req *Request, r
 		SignerKey:         req.Responder.SignerKey,
 		Certificates:      req.Responder.Certificates,
 		Digest:            h.opts.Digest,
+		ContentEncryption: h.opts.ContentEncryption,
 	}
 	var (
 		rep     *scep.PKIMessage
