@@ -1,0 +1,125 @@
+# Runs real SCEP peers against this module: sscep and the micromdm/scep client against the server
+# handler, and the client against the micromdm/scep server. The peers are built from pinned sources.
+# SCEP_INTEROP=required makes a test fail rather than skip when its peer is missing.
+name: Interop
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+  schedule:
+    # A weekly run catches a toolchain or runner change that breaks a peer build.
+    - cron: "29 5 * * 1"
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # sscep v0.10.0
+  SSCEP_COMMIT: b3f9798d56d0f6474b491204ff426d80fd4010a7
+  MICROMDM_SCEP_VERSION: v2.3.0
+  SCEP_INTEROP: required
+
+jobs:
+  sscep:
+    permissions:
+      contents: read
+    name: sscep against the server
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Clone the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Build sscep
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake libssl-dev
+          src="$RUNNER_TEMP/sscep"
+          git init -q "$src"
+          git -C "$src" fetch -q --depth 1 https://github.com/certnanny/sscep "$SSCEP_COMMIT"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          # sscep declares a CMake minimum older than 3.5, which CMake 4 refuses without this policy floor.
+          cmake -S "$src" -B "$src/build" -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          cmake --build "$src/build" -j "$(nproc)"
+          echo "SSCEP=$src/build/sscep" >> "$GITHUB_ENV"
+
+      - name: Run sscep against the handler
+        run: make interop INTEROP_RUN=TestSSCEP
+
+  micromdm-client:
+    permissions:
+      contents: read
+    name: micromdm/scep client against the server
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Clone the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Install the micromdm/scep client
+        run: |
+          GOBIN="$RUNNER_TEMP/bin" go install "github.com/micromdm/scep/v2/cmd/scepclient@${MICROMDM_SCEP_VERSION}"
+          echo "MICROMDM_SCEPCLIENT=$RUNNER_TEMP/bin/scepclient" >> "$GITHUB_ENV"
+
+      - name: Run the micromdm/scep client against the handler
+        run: make interop INTEROP_RUN=TestMicroMDMClient
+
+  micromdm-server:
+    permissions:
+      contents: read
+    name: Client against the micromdm/scep server
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SCEP_INTEROP_MICROMDM_URL: http://127.0.0.1:2016/scep
+      SCEP_INTEROP_MICROMDM_CHALLENGE: interop-secret
+    steps:
+      - name: Clone the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Start the micromdm/scep server
+        run: |
+          GOBIN="$RUNNER_TEMP/bin" go install "github.com/micromdm/scep/v2/cmd/scepserver@${MICROMDM_SCEP_VERSION}"
+          cd "$RUNNER_TEMP"
+          bin/scepserver ca -init -depot depot
+          nohup bin/scepserver -depot depot -port 2016 -challenge "$SCEP_INTEROP_MICROMDM_CHALLENGE" > scepserver.log 2>&1 &
+          for _ in $(seq 1 30); do
+            if curl -sf "${SCEP_INTEROP_MICROMDM_URL}?operation=GetCACaps" > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat scepserver.log
+          exit 1
+
+      - name: Run the client against the micromdm/scep server
+        run: make interop INTEROP_RUN=TestMicroMDMServer
+
+      - name: Show the server log
+        if: failure()
+        run: cat "$RUNNER_TEMP/scepserver.log"
