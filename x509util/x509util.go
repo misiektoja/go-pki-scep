@@ -28,6 +28,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+// Package x509util creates certificate requests that carry a challengePassword attribute and reads
+// that attribute back. crypto/x509 cannot add it.
 package x509util
 
 import (
@@ -115,8 +117,7 @@ func ParseChallengePassword(asn1Data []byte) (string, error) {
 	if err != nil {
 		return "", err
 	} else if len(rest) != 0 {
-		err = asn1.SyntaxError{Msg: "trailing data"}
-		return "", err
+		return "", errTrailingData
 	}
 
 	var password string
@@ -158,7 +159,7 @@ func addChallenge(
 	if err != nil {
 		return nil, err
 	} else if len(rest) != 0 {
-		err = asn1.SyntaxError{Msg: "trailing data"}
+		err = errTrailingData
 		return nil, err
 	}
 
@@ -176,7 +177,7 @@ func addChallenge(
 	if err != nil {
 		return nil, err
 	} else if len(rest) != 0 {
-		err = asn1.SyntaxError{Msg: "trailing data"}
+		err = errTrailingData
 		return nil, err
 	}
 
@@ -221,7 +222,7 @@ func addChallenge(
 // signingParamsForPublicKey returns the parameters to use for signing with
 // priv. If requestedSigAlgo is not zero then it overrides the default
 // signature algorithm.
-func signingParamsForPublicKey(pub interface{}, requestedSigAlgo x509.SignatureAlgorithm) (hashFunc crypto.Hash, sigAlgo pkix.AlgorithmIdentifier, err error) {
+func signingParamsForPublicKey(pub any, requestedSigAlgo x509.SignatureAlgorithm) (hashFunc crypto.Hash, sigAlgo pkix.AlgorithmIdentifier, err error) {
 	var pubType x509.PublicKeyAlgorithm
 
 	switch pub := pub.(type) {
@@ -253,11 +254,11 @@ func signingParamsForPublicKey(pub interface{}, requestedSigAlgo x509.SignatureA
 	}
 
 	if err != nil {
-		return
+		return hashFunc, sigAlgo, err
 	}
 
 	if requestedSigAlgo == 0 {
-		return
+		return hashFunc, sigAlgo, err
 	}
 
 	found := false
@@ -268,12 +269,12 @@ func signingParamsForPublicKey(pub interface{}, requestedSigAlgo x509.SignatureA
 
 		if details.pubKeyAlgo != pubType {
 			err = errors.New("x509: requested SignatureAlgorithm does not match private key type")
-			return
+			return hashFunc, sigAlgo, err
 		}
 		sigAlgo.Algorithm, hashFunc = details.oid, details.hash
 		if hashFunc == 0 {
 			err = errors.New("x509: cannot sign with hash function requested")
-			return
+			return hashFunc, sigAlgo, err
 		}
 		// copy x509.SignatureAlgorithm.isRSAPSS method
 		isRSAPSS := func() bool {
@@ -295,7 +296,7 @@ func signingParamsForPublicKey(pub interface{}, requestedSigAlgo x509.SignatureA
 		err = errors.New("x509: unknown SignatureAlgorithm")
 	}
 
-	return
+	return hashFunc, sigAlgo, err
 }
 
 var signatureAlgorithmDetails = []struct {
@@ -335,6 +336,9 @@ var (
 	oidChallengePassword = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 7}
 )
 
+// errTrailingData reports DER input that continues after the structure it holds.
+var errTrailingData error = asn1.SyntaxError{Msg: "trailing data"}
+
 // added to Go in 1.9
 var asn1NullRawValue = asn1.RawValue{
 	Tag: 5, /* ASN.1 NULL */
@@ -362,7 +366,8 @@ func rsaPSSParameters(hashFunc crypto.Hash) asn1.RawValue {
 		hashOID = oidSHA256
 	case crypto.SHA384:
 		hashOID = oidSHA384
-	case crypto.SHA512:
+	default:
+		// SHA-512 is the only other hash of the RSA-PSS signature algorithms.
 		hashOID = oidSHA512
 	}
 
