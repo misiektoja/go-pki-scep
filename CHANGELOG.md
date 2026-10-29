@@ -22,8 +22,10 @@ changes, which the Changed and Removed sections list.
 - **`scepclient`** enrolls, renews, polls and queries a SCEP server: `Enroll`, `Poll`,
   `EnrollAndWait`, `GetCert`, `GetCRL`, `GetCACaps`, `GetCACert`, `GetCACertChain` and
   `GetNextCACert`. It picks the digest, cipher and HTTP method from the server capabilities,
-  retries HTTP 503 answers and limits response size. `SortCACertificates` sorts a GetCACert
-  answer into the CA, the encryption recipients and the certificates allowed to sign answers.
+  retries HTTP 503 answers, reports each wait through `Options.OnBusy` and limits response size.
+  An empty answer to GetCACert, GetCACertChain or GetNextCACert returns `ErrEmptyResponse`.
+  `SortCACertificates` sorts a GetCACert answer into the CA, the encryption recipients and the
+  certificates allowed to sign answers.
 - **Every RFC 8894 message type.** `NewCertPollRequest`, `NewGetCertRequest` and
   `NewGetCRLRequest` build CertPoll, GetCert and GetCRL requests, and `ParsePKIMessage` parses
   them. `NewCSRRequest` builds UpdateReq messages as well.
