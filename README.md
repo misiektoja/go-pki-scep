@@ -138,6 +138,18 @@ The client copes with server behavior that RFC 8894 does not require:
   other answers.
 * CertRep messages signed with SHA-1.
 * Answers encrypted with single DES whatever the request used, when `Options.Decrypt` allows it.
+* A GetCACert answer that holds an RA certificate and the root but not the issuing CA, as the
+  OpenXPKI sample configuration sends. `CACertificates.CA` is then the root, so a certificate
+  issued under an intermediate CA does not verify against it. Enrollment works, because the RA
+  certificate encrypts and signs.
+
+Some differences need a choice by the caller:
+
+* EJBCA Community Edition 9.6.3 lists `Renewal` but refuses a RenewalReq. Renew there with a
+  PKCSReq and a new challenge password.
+* A CA with an ECDSA or Ed25519 key needs an RSA RA certificate in its GetCACert answer. Without
+  one, `Enroll`, `Poll`, `GetCert` and `GetCRL` return `ErrNoRSARecipient` before they send a
+  request.
 
 The Interop workflow runs these peers on every change:
 
@@ -161,8 +173,9 @@ describes every exported type and option. Repository files:
 
 ## Limitations
 
-* **Requesters need RSA keys.** Answers are encrypted for the request signer certificate with RSA
-  key transport, as RFC 8894 requires.
+* **Both ends need RSA keys for encryption.** Requests are encrypted for an RSA CA or RA
+  certificate and answers for the request signer certificate, with RSA key transport as RFC 8894
+  requires.
 * **No storage.** The CA implementation keeps pending requests, issued certificates and CRLs.
 * **No CA chain validation in the client.** The caller decides whether to trust the GetCACert
   answer, such as by a pinned fingerprint.
