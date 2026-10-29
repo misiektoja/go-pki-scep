@@ -1,7 +1,8 @@
 // Package scepserver serves SCEP (RFC 8894) over HTTP for a CA that the caller implements.
 //
-// The Handler answers GetCACaps, GetCACert, GetNextCACert and PKIOperation. PKIOperation accepts GET
-// with a base64 message parameter and POST with a binary body. The handler verifies the signature
+// The Handler answers GetCACaps, GetCACert, GetNextCACert and PKIOperation, plus GetCACertChain for
+// a CA that implements ChainGetter. PKIOperation accepts GET with a base64 message parameter and
+// POST with a binary body. The handler verifies the signature
 // of each pkiMessage, finds the responder its pkiEnvelope is addressed to, decrypts it and passes it
 // to the CA. The CA issues the certificate, keeps the request pending or refuses it.
 //
@@ -146,7 +147,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	operation := query.Get("operation")
 	switch operation {
-	case "GetCACaps", "GetCACert", "GetNextCACert":
+	case "GetCACaps", "GetCACert", "GetCACertChain", "GetNextCACert":
 		if r.Method != http.MethodGet {
 			w.Header().Set("Allow", http.MethodGet)
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -167,6 +168,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeBody(w, "text/plain; charset=utf-8", h.caps)
 	case "GetCACert":
 		h.getCACert(w, r, query.Get("message"))
+	case "GetCACertChain":
+		h.getCACertChain(w, r, query.Get("message"))
 	case "GetNextCACert":
 		h.getNextCACert(w, r, query.Get("message"))
 	default:
@@ -189,6 +192,35 @@ func (h *Handler) getCACert(w http.ResponseWriter, r *http.Request, name string)
 		return
 	case len(certs) == 1:
 		writeBody(w, contentTypeCACert, certs[0].Raw)
+		return
+	}
+	body, err := scep.DegenerateCertificates(certs)
+	if err != nil {
+		h.internalError(w, r, err)
+		return
+	}
+	writeBody(w, contentTypeCARACert, body)
+}
+
+// getCACertChain answers GetCACertChain with a certificate-only SignedData, also for a single
+// certificate. It is labelled application/x-x509-ca-ra-cert, the type of a GetCACert answer with
+// several certificates.
+func (h *Handler) getCACertChain(w http.ResponseWriter, r *http.Request, name string) {
+	getter, ok := h.ca.(ChainGetter)
+	if !ok {
+		h.refuse(w, r, http.StatusNotImplemented, "GetCACertChain is not supported", nil)
+		return
+	}
+	certs, err := getter.CACertificateChain(r.Context(), name)
+	switch {
+	case errors.Is(err, ErrNotFound):
+		h.refuse(w, r, http.StatusNotFound, "unknown CA", err)
+		return
+	case err != nil:
+		h.internalError(w, r, fmt.Errorf("CA certificate chain: %w", err))
+		return
+	case len(certs) == 0:
+		h.internalError(w, r, errors.New("the CA returned no certificate chain"))
 		return
 	}
 	body, err := scep.DegenerateCertificates(certs)

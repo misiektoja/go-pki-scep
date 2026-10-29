@@ -3,7 +3,8 @@
 // A requester fetches the CA certificates with GetCACert and checks them against a fingerprint it
 // trusts before using them. It then enrolls with a PKCSReq, renews with a RenewalReq and polls with
 // CertPoll while the CA keeps the request pending. GetCert and GetCRL read an issued certificate
-// and a CRL. Every CertRep must be signed by one of the CA or RA certificates.
+// and a CRL. GetCACertChain reads the CA chain from servers that offer it. Every CertRep must be
+// signed by one of the CA or RA certificates.
 package scepclient
 
 import (
@@ -47,8 +48,8 @@ type Options struct {
 	// HTTPClient sends the requests. The default has a DefaultTimeout timeout.
 	HTTPClient *http.Client
 
-	// CAName is the message parameter of GetCACaps, GetCACert and GetNextCACert. Servers that
-	// serve several CAs on one URL pick the CA by this name.
+	// CAName is the message parameter of GetCACaps, GetCACert, GetCACertChain and GetNextCACert.
+	// Servers that serve several CAs on one URL pick the CA by this name.
 	CAName string
 
 	// MaxResponseBytes bounds a response body. Zero selects DefaultMaxResponseBytes, which leaves
@@ -202,17 +203,32 @@ func (c *Client) GetCACert(ctx context.Context) (*CACertificates, error) {
 	if len(body) == 0 {
 		return nil, errors.New("scepclient: the GetCACert answer is empty")
 	}
-	certs, err := parseCACertBody(body, header.Get("Content-Type"))
+	certs, err := parseCACertBody("GetCACert", body, header.Get("Content-Type"))
 	if err != nil {
 		return nil, err
 	}
 	return SortCACertificates(certs)
 }
 
-// parseCACertBody reads one DER or PEM certificate or a certificate-only SignedData. The content
-// type picks the form first, and the other forms are tried after it because servers label them
-// inconsistently.
-func parseCACertBody(body []byte, contentType string) ([]*x509.Certificate, error) {
+// GetCACertChain fetches the CA certificate and the certificates that issued it, up to the root, in
+// the order the server sends them. RFC 8894 does not define the operation, but some CAs serve it.
+// The answer carries no RA certificates, so enrollment needs the GetCACert answer. The caller must
+// check the chain before it trusts it.
+func (c *Client) GetCACertChain(ctx context.Context) ([]*x509.Certificate, error) {
+	body, header, err := c.get(ctx, "GetCACertChain", c.caName)
+	if err != nil {
+		return nil, err
+	}
+	if len(body) == 0 {
+		return nil, errors.New("scepclient: the GetCACertChain answer is empty, so the server lacks it or needs a CA name")
+	}
+	return parseCACertBody("GetCACertChain", body, header.Get("Content-Type"))
+}
+
+// parseCACertBody reads one DER or PEM certificate or a certificate-only SignedData from the answer
+// to operation. The content type picks the form first, and the other forms are tried after it
+// because servers label them inconsistently.
+func parseCACertBody(operation string, body []byte, contentType string) ([]*x509.Certificate, error) {
 	mediaType, _, _ := mime.ParseMediaType(contentType)
 	single := func() ([]*x509.Certificate, error) {
 		der := body
@@ -238,7 +254,7 @@ func parseCACertBody(body []byte, contentType string) ([]*x509.Certificate, erro
 		}
 		errs = append(errs, err)
 	}
-	return nil, fmt.Errorf("scepclient: parse GetCACert answer: %w", errors.Join(errs...))
+	return nil, fmt.Errorf("scepclient: parse %s answer: %w", operation, errors.Join(errs...))
 }
 
 // GetNextCACert fetches the CA certificates that will replace current ones. The answer must be

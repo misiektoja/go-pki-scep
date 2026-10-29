@@ -65,6 +65,14 @@ type NextCAGetter interface {
 	NextCACertificates(ctx context.Context, name string) ([]*x509.Certificate, *Responder, error)
 }
 
+// ChainGetter is implemented by a CA that answers GetCACertChain. RFC 8894 does not define the
+// operation, but some CAs serve it and their clients still send it.
+type ChainGetter interface {
+	// CACertificateChain returns the CA certificate for name followed by the certificates that
+	// issued it, up to the root. Return ErrNotFound for a name the CA does not serve.
+	CACertificateChain(ctx context.Context, name string) ([]*x509.Certificate, error)
+}
+
 // Responder is the CA or RA identity that decrypts the requests for one CA and signs its answers.
 type Responder struct {
 	// SignerCertificate and SignerKey sign CertRep messages and GetNextCACert answers. Requesters
