@@ -139,7 +139,8 @@ func New(serverURL string, opts Options) (*Client, error) {
 // unknown CA name.
 var ErrEmptyResponse = errors.New("scepclient: the server sent an empty answer")
 
-// HTTPError is an HTTP answer other than 200 OK.
+// HTTPError is an HTTP answer other than 200 OK. A PKIOperation answer with that status that
+// carries a CertRep is parsed instead.
 type HTTPError struct {
 	StatusCode int
 	// RetryAfter is the delay of a Retry-After header in seconds, or zero.
@@ -290,11 +291,18 @@ func (c *Client) GetNextCACert(ctx context.Context, current *CACertificates) (*C
 	return SortCACertificates(certs)
 }
 
-// get sends a GET operation with a message parameter.
+// get sends a GET operation with a message parameter and returns the body of a 200 OK answer.
 func (c *Client) get(ctx context.Context, operation, message string) ([]byte, http.Header, error) {
-	return c.do(ctx, func() (*http.Request, error) {
+	a, err := c.do(ctx, func() (*http.Request, error) {
 		return http.NewRequestWithContext(ctx, http.MethodGet, c.operationURL(operation, message), nil)
 	})
+	if err != nil {
+		return nil, nil, err
+	}
+	if a.status != http.StatusOK {
+		return nil, nil, a.httpError()
+	}
+	return a.body, a.header, nil
 }
 
 // operationURL returns the server URL with the operation and, when set, the message parameter.
@@ -310,14 +318,14 @@ func (c *Client) operationURL(operation, message string) string {
 }
 
 // pkiOperation sends a pkiMessage with POST when the server lists POSTPKIOperation and with GET
-// otherwise, and returns the response body.
-func (c *Client) pkiOperation(ctx context.Context, msg *scep.PKIMessage) ([]byte, error) {
+// otherwise, and returns the answer whatever its HTTP status.
+func (c *Client) pkiOperation(ctx context.Context, msg *scep.PKIMessage) (*answer, error) {
 	caps, err := c.capabilities(ctx)
 	if err != nil {
 		return nil, err
 	}
 	post := caps.Has("POSTPKIOperation") || caps.Has("SCEPStandard")
-	body, _, err := c.do(ctx, func() (*http.Request, error) {
+	return c.do(ctx, func() (*http.Request, error) {
 		if !post {
 			target := c.operationURL("PKIOperation", base64.StdEncoding.EncodeToString(msg.Raw))
 			return http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
@@ -327,43 +335,66 @@ func (c *Client) pkiOperation(ctx context.Context, msg *scep.PKIMessage) ([]byte
 		if err != nil {
 			return nil, err
 		}
-		req.Header.Set("Content-Type", "application/x-pki-message")
+		req.Header.Set("Content-Type", pkiMessageType)
 		return req, nil
 	})
-	return body, err
 }
 
-// do sends a request, retries after HTTP 503 and returns the body of a 200 OK answer. A retried
-// request is the same message, which a server that answered 503 has not processed.
-func (c *Client) do(ctx context.Context, newRequest func() (*http.Request, error)) ([]byte, http.Header, error) {
+// pkiMessageType is the media type of a pkiMessage (RFC 8894 section 4.3).
+const pkiMessageType = "application/x-pki-message"
+
+// answer is a server response with its body read.
+type answer struct {
+	status int
+	header http.Header
+	body   []byte
+}
+
+// httpError describes an answer that is not 200 OK.
+func (a *answer) httpError() *HTTPError {
+	return &HTTPError{
+		StatusCode: a.status,
+		RetryAfter: retryAfter(a.header.Get("Retry-After")),
+		Body:       errorBody(a.body),
+	}
+}
+
+// pkiMessage reports whether the answer carries a pkiMessage. Some servers send a PENDING or FAILURE
+// CertRep with an HTTP error status, such as 202 or 400. RFC 8894 does not tie the pkiStatus to the
+// HTTP status, so the media type decides.
+func (a *answer) pkiMessage() bool {
+	if a.status == http.StatusOK {
+		return true
+	}
+	mediaType, _, err := mime.ParseMediaType(a.header.Get("Content-Type"))
+	return err == nil && mediaType == pkiMessageType && len(a.body) > 0
+}
+
+// do sends a request, retries after HTTP 503 and returns the answer, which may have any status. A
+// retried request is the same message, which a server that answered 503 has not processed.
+func (c *Client) do(ctx context.Context, newRequest func() (*http.Request, error)) (*answer, error) {
 	for attempt := 0; ; attempt++ {
 		req, err := newRequest()
 		if err != nil {
-			return nil, nil, fmt.Errorf("scepclient: build request: %w", err)
+			return nil, fmt.Errorf("scepclient: build request: %w", err)
 		}
 		resp, err := c.http.Do(req)
 		if err != nil {
-			return nil, nil, fmt.Errorf("scepclient: %w", err)
+			return nil, fmt.Errorf("scepclient: %w", err)
 		}
 		body, err := io.ReadAll(io.LimitReader(resp.Body, c.limit+1))
 		_ = resp.Body.Close()
 		if err != nil {
-			return nil, nil, fmt.Errorf("scepclient: read response: %w", err)
+			return nil, fmt.Errorf("scepclient: read response: %w", err)
 		}
 		if int64(len(body)) > c.limit {
-			return nil, nil, fmt.Errorf("scepclient: response exceeds %d bytes", c.limit)
+			return nil, fmt.Errorf("scepclient: response exceeds %d bytes", c.limit)
 		}
-		if resp.StatusCode == http.StatusOK {
-			return body, resp.Header, nil
+		a := &answer{status: resp.StatusCode, header: resp.Header, body: body}
+		if a.status != http.StatusServiceUnavailable || attempt >= c.busyRetries {
+			return a, nil
 		}
-		httpErr := &HTTPError{
-			StatusCode: resp.StatusCode,
-			RetryAfter: retryAfter(resp.Header.Get("Retry-After")),
-			Body:       errorBody(body),
-		}
-		if resp.StatusCode != http.StatusServiceUnavailable || attempt >= c.busyRetries {
-			return nil, nil, httpErr
-		}
+		httpErr := a.httpError()
 		delay := httpErr.RetryAfter
 		if delay == 0 {
 			delay = c.busyDelay
@@ -373,7 +404,7 @@ func (c *Client) do(ctx context.Context, newRequest func() (*http.Request, error
 			c.onBusy(httpErr, delay)
 		}
 		if err := sleep(ctx, delay); err != nil {
-			return nil, nil, errors.Join(httpErr, err)
+			return nil, errors.Join(httpErr, err)
 		}
 	}
 }
@@ -469,12 +500,18 @@ func pickCipher(caps Capabilities) pkcs7.ContentEncryptionAlgorithm {
 // exchange sends a request, verifies that the CertRep answers it and decrypts the content of a
 // SUCCESS answer.
 func (c *Client) exchange(ctx context.Context, ca *CACertificates, req *scep.PKIMessage, key crypto.Decrypter) (*scep.PKIMessage, error) {
-	body, err := c.pkiOperation(ctx, req)
+	a, err := c.pkiOperation(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	rep, err := scep.ParsePKIMessage(body, scep.ParseOptions{Signers: ca.Signers, AllowMD5: req.Digest == crypto.MD5})
+	if !a.pkiMessage() {
+		return nil, a.httpError()
+	}
+	rep, err := scep.ParsePKIMessage(a.body, scep.ParseOptions{Signers: ca.Signers, AllowMD5: req.Digest == crypto.MD5})
 	if err != nil {
+		if a.status != http.StatusOK {
+			return nil, errors.Join(a.httpError(), err)
+		}
 		return nil, err
 	}
 	if err := rep.MatchesRequest(req); err != nil {
