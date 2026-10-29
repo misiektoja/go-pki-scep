@@ -1,0 +1,73 @@
+version: "2"
+run:
+  allow-parallel-runners: true
+linters:
+  default: none
+  enable:
+    - bodyclose
+    - copyloopvar
+    - dupl
+    - errcheck
+    - errorlint
+    - exhaustive
+    - gocritic
+    - goconst
+    - gocyclo
+    - gosec
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - modernize
+    - nakedret
+    - noctx
+    - prealloc
+    - revive
+    - staticcheck
+    - unconvert
+    - unparam
+    - unused
+  settings:
+    # Switches over hash and algorithm identifiers handle the values they do not name in a default branch.
+    exhaustive:
+      default-signifies-exhaustive: true
+    gosec:
+      excludes:
+        # errcheck reports the same unchecked errors and its exclusions below apply.
+        - G104
+    revive:
+      rules:
+        - name: comment-spacings
+        - name: import-shadowing
+    staticcheck:
+      checks:
+        - "all"
+        - "-QF*"
+  exclusions:
+    generated: lax
+    rules:
+      # Function declarations and interface method signatures stay on one physical line.
+      - linters:
+          - lll
+        source: '^(func |\t[A-Z]\w*\()'
+      # MD5, SHA-1 and DES stay available because SCEP clients and older CMS peers still use them.
+      # MD5 and single DES are refused unless the caller enables them.
+      - linters:
+          - gosec
+        text: "G50[125]: Blocklisted import crypto/(md5|sha1|des)"
+      # Test code ignores errors, repeats setup and repeats literals on purpose.
+      - linters:
+          - dupl
+          - errcheck
+          - goconst
+          - gosec
+          - lll
+        path: _test\.go$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/misiektoja/go-scep

@@ -1,0 +1,24 @@
+title = "go-scep"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Paths that never enter the repository or that hold build output only"
+paths = [
+  # Ignored directories checked for tracked files by the gitleaks Make target.
+  '''^\.cache/''',
+  '''^dist/''',
+  # Downloaded tool binaries.
+  '''^bin/''',
+]
+
+[[allowlists]]
+description = "Throwaway RSA keys that the tests and their upstream versions use as fixtures"
+targetRules = ["private-key"]
+paths = [
+  '''(^|/)testdata/.+\.key$''',
+  '''^[a-z0-9_./]+_test\.go$''',
+  # A test CA key at the repository root in early micromdm/scep history.
+  '''^testca/ca\.key$''',
+]
