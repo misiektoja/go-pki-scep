@@ -23,7 +23,9 @@ changes, which the Changed and Removed sections list.
   `EnrollAndWait`, `GetCert`, `GetCRL`, `GetCACaps`, `GetCACert`, `GetCACertChain` and
   `GetNextCACert`. It picks the digest, cipher and HTTP method from the server capabilities,
   retries HTTP 503 answers, reports each wait through `Options.OnBusy` and limits response size.
-  An empty answer to GetCACert, GetCACertChain or GetNextCACert returns `ErrEmptyResponse`.
+  An empty answer to GetCACert, GetCACertChain or GetNextCACert returns `ErrEmptyResponse`. A
+  CertRep is read whatever the HTTP status of its answer, and other error answers return
+  `HTTPError`.
   `SortCACertificates` sorts a GetCACert answer into the CA, the encryption recipients and the
   certificates allowed to sign answers.
 - **Every RFC 8894 message type.** `NewCertPollRequest`, `NewGetCertRequest` and
