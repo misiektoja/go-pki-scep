@@ -478,3 +478,39 @@ func TestLogger(t *testing.T) {
 		t.Errorf("log levels = %v, want %v", logs.levels, want)
 	}
 }
+
+// TestResponseCipher covers a CertRep that follows the request cipher by default and the option
+// that fixes it, for clients that send one cipher but decrypt another.
+func TestResponseCipher(t *testing.T) {
+	t.Parallel()
+	ca := testca.New(t, testca.Options{})
+	for _, tc := range []struct {
+		name string
+		opts scepserver.Options
+		want pkcs7.ContentEncryptionAlgorithm
+	}{
+		{"default", scepserver.Options{}, pkcs7.AES256CBC},
+		{"fixed", scepserver.Options{ContentEncryption: pkcs7.AES128CBC}, pkcs7.AES128CBC},
+	} {
+		requester := testca.NewRequester(t, "device-1", "")
+		msg, err := scep.NewCSRRequest(scep.PKCSReq, requester.CSR, scep.RequestOptions{
+			Recipients:        []*x509.Certificate{ca.Certificate},
+			SignerCertificate: requester.Certificate,
+			SignerKey:         requester.Key,
+			Encryption:        pkcs7.EncryptOptions{ContentEncryption: pkcs7.AES256CBC},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		rep := certRep(t, ca, serve(newHandler(t, ca, tc.opts), http.MethodPost, "/scep?operation=PKIOperation", msg.Raw))
+		if rep.PKIStatus != scep.SUCCESS {
+			t.Fatalf("%s: %s", tc.name, rep.PKIStatus)
+		}
+		if err := rep.DecryptPKIEnvelope(requester.Certificate, requester.Key, pkcs7.DecryptOptions{}); err != nil {
+			t.Fatalf("%s: %v", tc.name, err)
+		}
+		if rep.ContentEncryption != tc.want {
+			t.Errorf("%s: response cipher %v, want %v", tc.name, rep.ContentEncryption, tc.want)
+		}
+	}
+}
