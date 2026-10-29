@@ -366,6 +366,24 @@ func TestGetNextCACert(t *testing.T) {
 	}
 }
 
+// TestGetCACertChain covers a chain up to a root and an unknown CA name.
+func TestGetCACertChain(t *testing.T) {
+	t.Parallel()
+	ca := testca.New(t, testca.Options{Name: "issuing", Root: true})
+	ts := newTestServer(t, ca, scepserver.Options{})
+	ctx := t.Context()
+	chain, err := newClient(t, ts.URL, scepclient.Options{CAName: "issuing"}).GetCACertChain(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(chain) != 2 || !chain[0].Equal(ca.Certificate) || !chain[1].Equal(ca.Root) {
+		t.Errorf("GetCACertChain returned %d certificates", len(chain))
+	}
+	if _, err := newClient(t, ts.URL, scepclient.Options{CAName: "other"}).GetCACertChain(ctx); !isHTTPStatus(err, http.StatusNotFound) {
+		t.Errorf("GetCACertChain for an unknown CA name: error = %v, want HTTP 404", err)
+	}
+}
+
 // TestCertRepFromUnexpectedSigner covers a CertRep that a key outside Signers signed.
 func TestCertRepFromUnexpectedSigner(t *testing.T) {
 	t.Parallel()
@@ -505,6 +523,9 @@ func TestServerQuirks(t *testing.T) {
 	}
 	if _, err := client.GetCACert(t.Context()); err == nil {
 		t.Error("GetCACert accepted an empty answer")
+	}
+	if _, err := client.GetCACertChain(t.Context()); err == nil || !strings.Contains(err.Error(), "empty") {
+		t.Errorf("GetCACertChain with an empty answer: error = %v", err)
 	}
 	current, err := scepclient.SortCACertificates([]*x509.Certificate{testca.New(t, testca.Options{}).Certificate})
 	if err != nil {

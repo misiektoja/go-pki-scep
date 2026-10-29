@@ -152,6 +152,36 @@ func TestGetCACert(t *testing.T) {
 	}
 }
 
+// TestGetCACertChain covers a chain up to a root, a single self-signed CA, an unknown name and a
+// POST.
+func TestGetCACertChain(t *testing.T) {
+	t.Parallel()
+	ca := testca.New(t, testca.Options{Name: "issuing", Root: true})
+	handler := newHandler(t, ca, scepserver.Options{})
+	rec := serve(handler, http.MethodGet, "/scep?operation=GetCACertChain&message=issuing", nil)
+	if rec.Code != http.StatusOK || rec.Header().Get("Content-Type") != "application/x-x509-ca-ra-cert" {
+		t.Fatalf("GetCACertChain: HTTP %d, %s", rec.Code, rec.Header().Get("Content-Type"))
+	}
+	certs, err := scep.CACerts(rec.Body.Bytes())
+	if err != nil || len(certs) != 2 || !certs[0].Equal(ca.Certificate) || !certs[1].Equal(ca.Root) {
+		t.Errorf("GetCACertChain returned %d certificates: %v", len(certs), err)
+	}
+	if rec := serve(handler, http.MethodGet, "/scep?operation=GetCACertChain&message=other", nil); rec.Code != http.StatusNotFound {
+		t.Errorf("GetCACertChain for an unknown name: HTTP %d", rec.Code)
+	}
+	if rec := serve(handler, http.MethodPost, "/scep?operation=GetCACertChain&message=issuing", nil); rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("POST GetCACertChain: HTTP %d", rec.Code)
+	}
+
+	// A single certificate is still sent as a SignedData, unlike GetCACert.
+	root := testca.New(t, testca.Options{})
+	rec = serve(newHandler(t, root, scepserver.Options{}), http.MethodGet, "/scep?operation=GetCACertChain", nil)
+	certs, err = scep.CACerts(rec.Body.Bytes())
+	if rec.Code != http.StatusOK || err != nil || len(certs) != 1 || !certs[0].Equal(root.Certificate) {
+		t.Errorf("GetCACertChain for a self-signed CA: HTTP %d, %d certificates, %v", rec.Code, len(certs), err)
+	}
+}
+
 // TestOperationAndMethod covers unknown operations and methods an operation does not take.
 func TestOperationAndMethod(t *testing.T) {
 	t.Parallel()
@@ -378,7 +408,8 @@ func (m minimalCA) Poll(ctx context.Context, req *scepserver.Request) ([]*x509.C
 	return m.ca.Poll(ctx, req)
 }
 
-// TestOptionalOperations covers a CA that answers neither GetCert, GetCRL nor GetNextCACert.
+// TestOptionalOperations covers a CA that answers neither GetCert, GetCRL, GetNextCACert nor
+// GetCACertChain.
 func TestOptionalOperations(t *testing.T) {
 	t.Parallel()
 	ca := testca.New(t, testca.Options{})
@@ -403,8 +434,10 @@ func TestOptionalOperations(t *testing.T) {
 			t.Errorf("%s without support: %s %s", msg.MessageType, rep.PKIStatus, rep.FailInfo)
 		}
 	}
-	if rec := serve(handler, http.MethodGet, "/scep?operation=GetNextCACert", nil); rec.Code != http.StatusNotImplemented {
-		t.Errorf("GetNextCACert without support: HTTP %d", rec.Code)
+	for _, operation := range []string{"GetNextCACert", "GetCACertChain"} {
+		if rec := serve(handler, http.MethodGet, "/scep?operation="+operation, nil); rec.Code != http.StatusNotImplemented {
+			t.Errorf("%s without support: HTTP %d", operation, rec.Code)
+		}
 	}
 }
 

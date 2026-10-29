@@ -33,6 +33,8 @@ type Options struct {
 	RA bool
 	// Rollover announces a next CA certificate through GetNextCACert.
 	Rollover bool
+	// Root has a separate root CA issue the CA certificate, so GetCACertChain returns both.
+	Root bool
 }
 
 // CA issues certificates in memory. Its methods implement every scepserver CA interface.
@@ -41,6 +43,8 @@ type CA struct {
 
 	Certificate *x509.Certificate
 	Key         *rsa.PrivateKey
+	// Root is the certificate that issued Certificate in Root mode.
+	Root *x509.Certificate
 
 	RASigner        *x509.Certificate
 	RASignerKey     *rsa.PrivateKey
@@ -77,13 +81,25 @@ func New(t testing.TB, opts Options) *CA {
 		caUsage |= x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment
 	}
 	ca.Key = newKey(t)
+	issuer, issuerKey := (*x509.Certificate)(nil), ca.Key
+	if opts.Root {
+		issuerKey = newKey(t)
+		ca.Root = create(t, &x509.Certificate{
+			SerialNumber:          randomSerial(t),
+			Subject:               pkix.Name{CommonName: "SCEP Test Root CA"},
+			KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+			IsCA:                  true,
+			BasicConstraintsValid: true,
+		}, nil, issuerKey, issuerKey)
+		issuer = ca.Root
+	}
 	ca.Certificate = create(t, &x509.Certificate{
 		SerialNumber:          randomSerial(t),
 		Subject:               pkix.Name{CommonName: "SCEP Test CA", Organization: []string{"Example"}},
 		KeyUsage:              caUsage,
 		IsCA:                  true,
 		BasicConstraintsValid: true,
-	}, nil, ca.Key, ca.Key)
+	}, issuer, issuerKey, ca.Key)
 	if opts.RA {
 		ca.RASignerKey = newKey(t)
 		ca.RASigner = create(t, &x509.Certificate{
@@ -181,6 +197,17 @@ func (ca *CA) CACertificates(_ context.Context, name string) ([]*x509.Certificat
 	}
 	if ca.opts.RA {
 		return []*x509.Certificate{ca.Certificate, ca.RASigner, ca.RAEncrypter}, nil
+	}
+	return []*x509.Certificate{ca.Certificate}, nil
+}
+
+// CACertificateChain returns the CA certificate and, in Root mode, the root that issued it.
+func (ca *CA) CACertificateChain(_ context.Context, name string) ([]*x509.Certificate, error) {
+	if ca.opts.Name != "" && name != ca.opts.Name {
+		return nil, scepserver.ErrNotFound
+	}
+	if ca.Root != nil {
+		return []*x509.Certificate{ca.Certificate, ca.Root}, nil
 	}
 	return []*x509.Certificate{ca.Certificate}, nil
 }
