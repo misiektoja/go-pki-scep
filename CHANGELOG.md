@@ -14,15 +14,15 @@ changes, which the Changed and Removed sections list.
 
 ### Added
 - **`scepserver`** serves SCEP over HTTP for a CA the caller implements: GetCACaps, GetCACert,
-  GetNextCACert and PKIOperation over GET and POST. A CA can answer PENDING and complete the
-  request on a later CertPoll, return a failInfo, or ask the client to retry later with HTTP 503
-  and `Retry-After`. GetCert, GetCRL and GetNextCACert are optional interfaces. Request bodies are
-  limited to 64 KiB by default.
+  GetNextCACert, GetCACertChain and PKIOperation over GET and POST. A CA can answer PENDING and
+  complete the request on a later CertPoll, return a failInfo, or ask the client to retry later
+  with HTTP 503 and `Retry-After`. GetCert, GetCRL, GetNextCACert and GetCACertChain are optional
+  interfaces. Request bodies are limited to 64 KiB by default.
 - **`scepclient`** enrolls, renews, polls and queries a SCEP server: `Enroll`, `Poll`,
-  `EnrollAndWait`, `GetCert`, `GetCRL`, `GetCACaps`, `GetCACert` and `GetNextCACert`. It picks the
-  digest, cipher and HTTP method from the server capabilities, retries HTTP 503 answers and limits
-  response size. `SortCACertificates` sorts a GetCACert answer into the CA, the encryption
-  recipients and the certificates allowed to sign answers.
+  `EnrollAndWait`, `GetCert`, `GetCRL`, `GetCACaps`, `GetCACert`, `GetCACertChain` and
+  `GetNextCACert`. It picks the digest, cipher and HTTP method from the server capabilities,
+  retries HTTP 503 answers and limits response size. `SortCACertificates` sorts a GetCACert
+  answer into the CA, the encryption recipients and the certificates allowed to sign answers.
 - **Every RFC 8894 message type.** `NewCertPollRequest`, `NewGetCertRequest` and
   `NewGetCRLRequest` build CertPoll, GetCert and GetCRL requests, and `ParsePKIMessage` parses
   them. `NewCSRRequest` builds UpdateReq messages as well.
