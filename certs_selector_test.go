@@ -40,7 +40,6 @@ func TestFingerprintCertsSelector(t *testing.T) {
 			0,
 		},
 	} {
-		test := test
 		t.Run(test.testName, func(t *testing.T) {
 			t.Parallel()
 
@@ -91,7 +90,6 @@ func TestEnciphermentCertsSelector(t *testing.T) {
 			},
 		},
 	} {
-		test := test
 		t.Run(test.testName, func(t *testing.T) {
 			t.Parallel()
 
@@ -134,7 +132,6 @@ func TestNopCertsSelector(t *testing.T) {
 			},
 		},
 	} {
-		test := test
 		t.Run(test.testName, func(t *testing.T) {
 			t.Parallel()
 

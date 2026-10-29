@@ -16,11 +16,9 @@ func TestCreateCertificateRequest(t *testing.T) {
 	}
 
 	template := CertificateRequest{
-		CertificateRequest: x509.CertificateRequest{
-			Subject: pkix.Name{
-				CommonName: "test.acme.co",
-				Country:    []string{"US"},
-			},
+		Subject: pkix.Name{
+			CommonName: "test.acme.co",
+			Country:    []string{"US"},
 		},
 		ChallengePassword: "foobar",
 	}
