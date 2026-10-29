@@ -26,8 +26,9 @@ changes, which the Changed and Removed sections list.
   An empty answer to GetCACert, GetCACertChain or GetNextCACert returns `ErrEmptyResponse`. A
   CertRep is read whatever the HTTP status of its answer, and other error answers return
   `HTTPError`.
-  `SortCACertificates` sorts a GetCACert answer into the CA, the encryption recipients and the
-  certificates allowed to sign answers.
+  `SortCACertificates` sorts a GetCACert answer into the CA, the RSA certificates requests are
+  encrypted for and the certificates allowed to sign answers. Without an RSA certificate to
+  encrypt for, requests return `ErrNoRSARecipient` before anything is sent.
 - **Every RFC 8894 message type.** `NewCertPollRequest`, `NewGetCertRequest` and
   `NewGetCRLRequest` build CertPoll, GetCert and GetCRL requests, and `ParsePKIMessage` parses
   them. `NewCSRRequest` builds UpdateReq messages as well.
