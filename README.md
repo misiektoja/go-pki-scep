@@ -133,6 +133,9 @@ The client copes with server behavior that RFC 8894 does not require:
 * HTTP 503 without a Retry-After header, sent to throttle requests that arrive close together.
   The client retries after `BusyDelay`, five seconds by default, and calls `Options.OnBusy` before
   each wait. A busy GetCACaps answer is reported, not taken for a server without capabilities.
+* A PENDING or FAILURE CertRep sent with an HTTP error status, such as 202 or 400. The client
+  reads the CertRep of any answer typed `application/x-pki-message` and returns `HTTPError` for
+  other answers.
 * CertRep messages signed with SHA-1.
 * Answers encrypted with single DES whatever the request used, when `Options.Decrypt` allows it.
 
