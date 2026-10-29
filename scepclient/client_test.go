@@ -730,6 +730,117 @@ func TestSortCACertificates(t *testing.T) {
 	if !sorted.CA.Equal(issuing) || !slices.EqualFunc(sorted.Recipients, []*x509.Certificate{issuing}, (*x509.Certificate).Equal) {
 		t.Error("the issuing CA of a root and sub CA chain is not the sub CA")
 	}
+
+	// An RSA RA under an ECDSA root, as OpenXPKI serves it, encrypts for the RA.
+	ecRoot, ecRootKey := newECDSACertificate(t, "ECDSA Root", true, nil, nil)
+	rsaRA := issueRSARA(t, ecRoot, ecRootKey)
+	sorted, err = scepclient.SortCACertificates([]*x509.Certificate{rsaRA, ecRoot})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !sorted.CA.Equal(ecRoot) || !slices.EqualFunc(sorted.Recipients, []*x509.Certificate{rsaRA}, (*x509.Certificate).Equal) {
+		t.Error("an RSA RA under an ECDSA root is not the recipient")
+	}
+
+	// An ECDSA RA cannot decrypt RSA key transport, so the RSA CA certificate is the recipient.
+	ecRA, _ := newECDSACertificate(t, "ECDSA RA", false, root.Certificate, root.Key)
+	sorted, err = scepclient.SortCACertificates([]*x509.Certificate{ecRA, root.Certificate})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.EqualFunc(sorted.Recipients, []*x509.Certificate{root.Certificate}, (*x509.Certificate).Equal) {
+		t.Error("an ECDSA RA certificate is a recipient")
+	}
+	if !slices.ContainsFunc(sorted.Signers, ecRA.Equal) {
+		t.Error("an ECDSA RA certificate may not sign CertReps")
+	}
+}
+
+// TestEnrollWithoutRSARecipient covers CA certificates that hold no RSA key to encrypt for. The
+// answer still sorts, so a caller can read it, and Enroll refuses before sending anything.
+func TestEnrollWithoutRSARecipient(t *testing.T) {
+	t.Parallel()
+	ecCA, _ := newECDSACertificate(t, "ECDSA CA", true, nil, nil)
+	sorted, err := scepclient.SortCACertificates([]*x509.Certificate{ecCA})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(sorted.Recipients) != 0 {
+		t.Errorf("an ECDSA CA certificate is a recipient")
+	}
+
+	var requests atomic.Int32
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+		http.Error(w, "unexpected request", http.StatusTeapot)
+	}))
+	t.Cleanup(ts.Close)
+	client := newClient(t, ts.URL, scepclient.Options{})
+	requester := testca.NewRequester(t, "device-1", "secret")
+	manual := &scepclient.CACertificates{All: sorted.All, CA: ecCA, Recipients: []*x509.Certificate{ecCA}, Signers: []*x509.Certificate{ecCA}}
+	for name, certs := range map[string]*scepclient.CACertificates{"sorted": sorted, "manual recipients": manual} {
+		if _, err := client.Enroll(t.Context(), certs, enrollRequest(requester)); !errors.Is(err, scepclient.ErrNoRSARecipient) {
+			t.Errorf("%s: Enroll error = %v, want ErrNoRSARecipient", name, err)
+		}
+	}
+	if n := requests.Load(); n != 0 {
+		t.Errorf("Enroll sent %d requests to the server", n)
+	}
+}
+
+// newECDSACertificate returns a P-256 certificate and its key. Without an issuer it is
+// self-signed. A certificate that is not a CA has no key usage extension, so its key usage does not
+// rule it out as a recipient.
+func newECDSACertificate(t *testing.T, name string, isCA bool, issuer *x509.Certificate, issuerKey any) (*x509.Certificate, *ecdsa.PrivateKey) {
+	t.Helper()
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	template := &x509.Certificate{
+		SerialNumber:          big.NewInt(60),
+		Subject:               pkix.Name{CommonName: name},
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(time.Hour),
+		IsCA:                  isCA,
+		BasicConstraintsValid: true,
+	}
+	if isCA {
+		template.KeyUsage = x509.KeyUsageCertSign | x509.KeyUsageDigitalSignature
+	}
+	if issuer == nil {
+		issuer, issuerKey = template, key
+	}
+	der, err := x509.CreateCertificate(rand.Reader, template, issuer, key.Public(), issuerKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cert, err := x509.ParseCertificate(der)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return cert, key
+}
+
+// issueRSARA issues an RSA RA certificate that allows key encipherment under issuer.
+func issueRSARA(t *testing.T, issuer *x509.Certificate, issuerKey any) *x509.Certificate {
+	t.Helper()
+	key := testca.NewRequester(t, "ra", "").Key
+	der, err := x509.CreateCertificate(rand.Reader, &x509.Certificate{
+		SerialNumber: big.NewInt(61),
+		Subject:      pkix.Name{CommonName: "RSA RA"},
+		NotBefore:    time.Now().Add(-time.Hour),
+		NotAfter:     time.Now().Add(time.Hour),
+		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+	}, issuer, key.Public(), issuerKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cert, err := x509.ParseCertificate(der)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return cert
 }
 
 // issueSubCA issues a CA certificate under root.
