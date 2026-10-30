@@ -503,8 +503,8 @@ func (c *Client) requestOptions(ctx context.Context, ca *CACertificates, signerC
 	}, decrypter, nil
 }
 
-// pickDigest returns the strongest digest the server lists. SHA-256 is used when it lists none,
-// because RFC 8894 makes it mandatory.
+// pickDigest prefers SHA-256 when the server lists it or SCEPStandard, then SHA-512, then SHA-1.
+// SHA-256 is also used when the server lists none of them, because RFC 8894 makes it mandatory.
 func pickDigest(caps Capabilities) crypto.Hash {
 	switch {
 	case caps.Has("SHA-256") || caps.Has("SCEPStandard"):
