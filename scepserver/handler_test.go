@@ -298,6 +298,17 @@ func TestDecryptFailInfo(t *testing.T) {
 func TestNonRSARequester(t *testing.T) {
 	t.Parallel()
 	ca := testca.New(t, testca.Options{})
+	msg := ecSignedPKCSReq(t, ca)
+	rep := certRep(t, ca, serve(newHandler(t, ca, scepserver.Options{}), http.MethodPost, "/scep?operation=PKIOperation", msg.Raw))
+	if rep.PKIStatus != scep.FAILURE || rep.FailInfo != scep.BadAlg {
+		t.Errorf("EC requester: %s %s, want FAILURE badAlg", rep.PKIStatus, rep.FailInfo)
+	}
+}
+
+// ecSignedPKCSReq builds a PKCSReq to the CA certificate signed with an ECDSA key and its
+// self-signed certificate.
+func ecSignedPKCSReq(t *testing.T, ca *testca.CA) *scep.PKIMessage {
+	t.Helper()
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		t.Fatal(err)
@@ -325,9 +336,99 @@ func TestNonRSARequester(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	rep := certRep(t, ca, serve(newHandler(t, ca, scepserver.Options{}), http.MethodPost, "/scep?operation=PKIOperation", msg.Raw))
-	if rep.PKIStatus != scep.FAILURE || rep.FailInfo != scep.BadAlg {
-		t.Errorf("EC requester: %s %s, want FAILURE badAlg", rep.PKIStatus, rep.FailInfo)
+	return msg
+}
+
+// refusalLog collects the refusals a RefusalRecorder receives.
+type refusalLog struct {
+	mu       sync.Mutex
+	failures []*scepserver.Failure
+	types    []scep.MessageType
+}
+
+// RecordRefusal appends the failure and the message type of the request.
+func (l *refusalLog) RecordRefusal(_ context.Context, req *scepserver.Request, failure *scepserver.Failure) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.failures = append(l.failures, failure)
+	l.types = append(l.types, req.Message.MessageType)
+}
+
+// take returns the collected refusals and clears them.
+func (l *refusalLog) take() ([]*scepserver.Failure, []scep.MessageType) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	failures, types := l.failures, l.types
+	l.failures, l.types = nil, nil
+	return failures, types
+}
+
+// recordingCA is the test CA with a RefusalRecorder.
+type recordingCA struct {
+	*testca.CA
+	*refusalLog
+}
+
+// recordingMinimalCA answers neither GetCert nor GetCRL and records refusals.
+type recordingMinimalCA struct {
+	minimalCA
+	*refusalLog
+}
+
+// TestRefusalRecorder covers the refusals the handler reports to the CA: those it answers without
+// the CA, and none of the outcomes the CA returns itself.
+func TestRefusalRecorder(t *testing.T) {
+	t.Parallel()
+	ca := testca.New(t, testca.Options{})
+	log := &refusalLog{}
+	handler := newHandler(t, recordingCA{CA: ca, refusalLog: log}, scepserver.Options{})
+	post := func(h http.Handler, msg *scep.PKIMessage) *scep.PKIMessage {
+		t.Helper()
+		return certRep(t, ca, serve(h, http.MethodPost, "/scep?operation=PKIOperation", msg.Raw))
+	}
+	check := func(name string, rep *scep.PKIMessage, msgType scep.MessageType, info scep.FailInfo, cause error) {
+		t.Helper()
+		failures, types := log.take()
+		switch {
+		case rep.PKIStatus != scep.FAILURE || rep.FailInfo != info:
+			t.Errorf("%s: answered %s %s, want FAILURE %s", name, rep.PKIStatus, rep.FailInfo, info)
+		case len(failures) != 1:
+			t.Errorf("%s: %d refusals recorded, want 1", name, len(failures))
+		case failures[0].Info != info || types[0] != msgType:
+			t.Errorf("%s: recorded %s for %s", name, failures[0].Info, types[0])
+		case cause != nil && !errors.Is(failures[0], cause):
+			t.Errorf("%s: recorded cause %v, want %v", name, failures[0].Err, cause)
+		}
+	}
+
+	check("ECDSA signer", post(handler, ecSignedPKCSReq(t, ca)), scep.PKCSReq, scep.BadAlg, scepserver.ErrSignerNotRSA)
+	check("single DES", post(handler, pkcsReq(t, ca, pkcs7.EncryptOptions{ContentEncryption: pkcs7.DESCBC})), scep.PKCSReq, scep.BadAlg, pkcs7.ErrContentEncryptionNotAllowed)
+
+	minimal := newHandler(t, recordingMinimalCA{minimalCA{ca}, log}, scepserver.Options{})
+	requester := testca.NewRequester(t, "device-1", "")
+	opts := scep.RequestOptions{
+		Recipients:        []*x509.Certificate{ca.Certificate},
+		SignerCertificate: requester.Certificate,
+		SignerKey:         requester.Key,
+	}
+	getCert, err := scep.NewGetCertRequest(ca.Certificate.RawSubject, big.NewInt(5), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	check("GetCert without support", post(minimal, getCert), scep.GetCert, scep.BadRequest, nil)
+
+	if rep := post(handler, pkcsReq(t, ca, pkcs7.EncryptOptions{})); rep.PKIStatus != scep.SUCCESS {
+		t.Errorf("valid request: %s %s", rep.PKIStatus, rep.FailInfo)
+	}
+	refused := newHandler(t, struct {
+		outcomeCA
+		*refusalLog
+	}{outcomeCA{CA: ca, err: &scepserver.Failure{Info: scep.BadRequest}}, log}, scepserver.Options{})
+	if rep := post(refused, pkcsReq(t, ca, pkcs7.EncryptOptions{})); rep.PKIStatus != scep.FAILURE {
+		t.Errorf("refused by the CA: %s", rep.PKIStatus)
+	}
+	if failures, _ := log.take(); len(failures) != 0 {
+		t.Errorf("%d refusals recorded for a success and a CA refusal, want 0", len(failures))
 	}
 }
 
