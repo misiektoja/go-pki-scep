@@ -75,3 +75,6 @@ changes, which the Changed and Removed sections list.
   argument was.
 - **Each CertRep carries a fresh senderNonce.** `Success` and `Fail` reused the request
   senderNonce.
+- **`x509util.CreateCertificateRequest` signs with SHA-1 when the template asks for it.** A
+  request with a challenge password and `SHA1WithRSA` or `ECDSAWithSHA1` failed with "unknown
+  SignatureAlgorithm".
