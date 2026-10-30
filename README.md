@@ -75,7 +75,9 @@ http.Handle("/scep", handler)
 
 `Enroll` returns the issued certificate, `scepserver.ErrPending` to keep a request waiting for
 approval, a `*scepserver.Failure` to refuse it or a `*scepserver.Busy` to ask the client to come
-back later.
+back later. The handler refuses some requests without the CA, such as one signed with an ECDSA key
+or encrypted with a cipher it does not accept. A CA that implements `scepserver.RefusalRecorder`
+is told about those as well.
 
 A client fetches the CA certificates, checks them against a fingerprint it trusts and enrolls:
 
@@ -104,6 +106,8 @@ if res.Status != scep.SUCCESS {
 
 A PKCSReq is signed with a self-signed certificate for the CSR key. A RenewalReq is signed with the
 certificate being renewed. `x509util.CreateCertificateRequest` adds the challenge password to a CSR.
+For a CSR with an ECDSA key, sign the PKCSReq with a separate RSA key and its self-signed
+certificate, because the answer is encrypted for the signer certificate.
 
 ## Security defaults
 
@@ -175,7 +179,10 @@ describes every exported type and option. Repository files:
 
 * **Both ends need RSA keys for encryption.** Requests are encrypted for an RSA CA or RA
   certificate and answers for the request signer certificate, with RSA key transport as RFC 8894
-  requires.
+  requires. The handler answers a request signed with another key type with badAlg and the cause
+  `ErrSignerNotRSA`. RFC 8894 section 3.1 encrypts answers for such keys with the challenge
+  password through PasswordRecipientInfo, which go-scep does not support. A CSR may still carry an
+  ECDSA key when an RSA certificate signs the request.
 * **No storage.** The CA implementation keeps pending requests, issued certificates and CRLs.
 * **No CA chain validation in the client.** The caller decides whether to trust the GetCACert
   answer, such as by a pinned fingerprint.
