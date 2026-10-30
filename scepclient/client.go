@@ -30,7 +30,7 @@ import (
 
 	"github.com/misiektoja/go-pkcs7"
 
-	"github.com/misiektoja/go-scep"
+	scep "github.com/misiektoja/go-pki-scep"
 )
 
 // Defaults for Options fields left at zero.

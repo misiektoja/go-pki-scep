@@ -20,8 +20,8 @@ import (
 
 	"github.com/misiektoja/go-pkcs7"
 
-	"github.com/misiektoja/go-scep"
-	"github.com/misiektoja/go-scep/x509util"
+	scep "github.com/misiektoja/go-pki-scep"
+	"github.com/misiektoja/go-pki-scep/x509util"
 )
 
 // testCA is a CA that signs its own responses, the common SCEP setup without an RA.

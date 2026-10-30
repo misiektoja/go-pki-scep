@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/misiektoja/go-scep"
+	scep "github.com/misiektoja/go-pki-scep"
 )
 
 // CA is the certificate authority behind a Handler. The handler calls its methods concurrently.

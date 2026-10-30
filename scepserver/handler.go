@@ -29,7 +29,7 @@ import (
 
 	"github.com/misiektoja/go-pkcs7"
 
-	"github.com/misiektoja/go-scep"
+	scep "github.com/misiektoja/go-pki-scep"
 )
 
 // HTTP content types from RFC 8894 section 4.

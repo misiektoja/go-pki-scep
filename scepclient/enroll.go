@@ -11,7 +11,7 @@ import (
 
 	"github.com/misiektoja/go-pkcs7"
 
-	"github.com/misiektoja/go-scep"
+	scep "github.com/misiektoja/go-pki-scep"
 )
 
 // EnrollRequest describes a PKCSReq or RenewalReq and the CertPoll messages that follow it.

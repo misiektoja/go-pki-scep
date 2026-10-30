@@ -13,7 +13,7 @@ import (
 
 	"github.com/misiektoja/go-pkcs7"
 
-	"github.com/misiektoja/go-scep/x509util"
+	"github.com/misiektoja/go-pki-scep/x509util"
 )
 
 // PKIMessage is a parsed or built SCEP pkiMessage.

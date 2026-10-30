@@ -6,8 +6,8 @@ import (
 
 	"github.com/misiektoja/go-pkcs7"
 
-	"github.com/misiektoja/go-scep/internal/testca"
-	"github.com/misiektoja/go-scep/scepserver"
+	"github.com/misiektoja/go-pki-scep/internal/testca"
+	"github.com/misiektoja/go-pki-scep/scepserver"
 )
 
 // FuzzPKIOperation posts arbitrary bodies to the handler. Malformed input must be refused with a

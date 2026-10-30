@@ -12,7 +12,7 @@ import (
 
 	"github.com/misiektoja/go-pkcs7"
 
-	"github.com/misiektoja/go-scep/cryptoutil"
+	"github.com/misiektoja/go-pki-scep/cryptoutil"
 )
 
 // RequestOptions holds what every request needs: who signs it, who it is encrypted for and the

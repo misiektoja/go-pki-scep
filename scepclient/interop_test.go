@@ -11,9 +11,9 @@ import (
 
 	"github.com/misiektoja/go-pkcs7"
 
-	"github.com/misiektoja/go-scep"
-	"github.com/misiektoja/go-scep/internal/testca"
-	"github.com/misiektoja/go-scep/scepclient"
+	scep "github.com/misiektoja/go-pki-scep"
+	"github.com/misiektoja/go-pki-scep/internal/testca"
+	"github.com/misiektoja/go-pki-scep/scepclient"
 )
 
 // TestMicroMDMServer enrolls with a micromdm/scep server that the Interop workflow starts.

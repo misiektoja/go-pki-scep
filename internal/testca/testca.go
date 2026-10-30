@@ -14,9 +14,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/misiektoja/go-scep"
-	"github.com/misiektoja/go-scep/scepserver"
-	"github.com/misiektoja/go-scep/x509util"
+	scep "github.com/misiektoja/go-pki-scep"
+	"github.com/misiektoja/go-pki-scep/scepserver"
+	"github.com/misiektoja/go-pki-scep/x509util"
 )
 
 // Options selects the behavior of a CA.

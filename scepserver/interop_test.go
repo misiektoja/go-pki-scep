@@ -18,9 +18,9 @@ import (
 
 	"github.com/misiektoja/go-pkcs7"
 
-	"github.com/misiektoja/go-scep"
-	"github.com/misiektoja/go-scep/internal/testca"
-	"github.com/misiektoja/go-scep/scepserver"
+	scep "github.com/misiektoja/go-pki-scep"
+	"github.com/misiektoja/go-pki-scep/internal/testca"
+	"github.com/misiektoja/go-pki-scep/scepserver"
 )
 
 // The interop tests run real SCEP clients against the handler. The Interop workflow builds the

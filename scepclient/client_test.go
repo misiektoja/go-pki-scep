@@ -25,10 +25,10 @@ import (
 
 	"github.com/misiektoja/go-pkcs7"
 
-	"github.com/misiektoja/go-scep"
-	"github.com/misiektoja/go-scep/internal/testca"
-	"github.com/misiektoja/go-scep/scepclient"
-	"github.com/misiektoja/go-scep/scepserver"
+	scep "github.com/misiektoja/go-pki-scep"
+	"github.com/misiektoja/go-pki-scep/internal/testca"
+	"github.com/misiektoja/go-pki-scep/scepclient"
+	"github.com/misiektoja/go-pki-scep/scepserver"
 )
 
 // testServer runs a scepserver handler for ca and records the HTTP methods of PKIOperation.

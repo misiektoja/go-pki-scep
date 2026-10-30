@@ -91,8 +91,8 @@ release-check: ## Build, vet and test an export of HEAD and import it from a sep
 	mkdir -p "$$check/export" "$$check/consumer"; \
 	git archive --format=tar HEAD | tar -x -C "$$check/export"; \
 	cd "$$check/export"; go mod verify; go build ./...; go vet ./...; go test -count=1 ./...; \
-	cd "$$check/consumer"; printf 'module example.com/consumer\n\ngo %s\n\nrequire github.com/misiektoja/go-scep v0.0.0\n\nreplace github.com/misiektoja/go-scep => ../export\n' "$(GO_VERSION)" > go.mod; \
-	printf 'package main\n\nimport (\n\t"log"\n\n\t"github.com/misiektoja/go-scep"\n\t"github.com/misiektoja/go-scep/scepclient"\n)\n\nfunc main() {\n\t_, err := scep.ParsePKIMessage(nil, scep.ParseOptions{})\n\tlog.Println(err)\n\t_, err = scepclient.New("https://ca.example.com/scep", scepclient.Options{})\n\tlog.Println(err)\n}\n' > main.go; \
+	cd "$$check/consumer"; printf 'module example.com/consumer\n\ngo %s\n\nrequire github.com/misiektoja/go-pki-scep v0.0.0\n\nreplace github.com/misiektoja/go-pki-scep => ../export\n' "$(GO_VERSION)" > go.mod; \
+	printf 'package main\n\nimport (\n\t"log"\n\n\t"github.com/misiektoja/go-pki-scep"\n\t"github.com/misiektoja/go-pki-scep/scepclient"\n)\n\nfunc main() {\n\t_, err := scep.ParsePKIMessage(nil, scep.ParseOptions{})\n\tlog.Println(err)\n\t_, err = scepclient.New("https://ca.example.com/scep", scepclient.Options{})\n\tlog.Println(err)\n}\n' > main.go; \
 	go mod tidy; go build ./...; go run .; \
 	echo "release check passed for $$(git -C "$(CURDIR)" rev-parse --short HEAD)"
 

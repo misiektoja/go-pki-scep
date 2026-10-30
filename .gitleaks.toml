@@ -1,4 +1,4 @@
-title = "go-scep"
+title = "go-pki-scep"
 
 [extend]
 useDefault = true
