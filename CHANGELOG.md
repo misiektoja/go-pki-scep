@@ -1,11 +1,12 @@
 # Changelog
 
-Notable changes to go-scep, a continuation of [smallstep/scep](https://github.com/smallstep/scep).
+Notable changes to go-pki-scep, a continuation of
+[smallstep/scep](https://github.com/smallstep/scep).
 
 ## [0.1.0] - 2026-10-30
 
-First release as `github.com/misiektoja/go-scep`. smallstep/scep has no tagged releases, so this
-lists the changes since its commit 63893da. The module adds an HTTP server handler and an HTTP
+First release as `github.com/misiektoja/go-pki-scep`. smallstep/scep has no tagged releases, so
+this lists the changes since its commit 63893da. The module adds an HTTP server handler and an HTTP
 client and covers every RFC 8894 message type. The defaults are SHA-256 and AES-128-CBC. Request
 encryption needs RSA keys at both ends. Code written for smallstep/scep needs the changes under
 Changed and Removed.
@@ -30,8 +31,8 @@ Changed and Removed.
   several keys, clients that poll without storing state and GetNextCACert answers.
 
 ### Changed
-- **Module path** `github.com/misiektoja/go-scep`. Go 1.27.3 or newer is required. The CMS layer is
-  [go-pkcs7](https://github.com/misiektoja/go-pkcs7).
+- **Module path** `github.com/misiektoja/go-pki-scep`. Go 1.27.3 or newer is required. The CMS
+  layer is [go-pkcs7](https://github.com/misiektoja/go-pkcs7).
 - **Option structs replace the functional options** in `ParsePKIMessage`, `NewCSRRequest`,
   `Success` and `Fail`.
 - **Keys are `crypto.Signer` and `crypto.Decrypter`**, so they can live in an HSM.
