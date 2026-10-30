@@ -75,6 +75,7 @@ changes, which the Changed and Removed sections list.
   argument was.
 - **Each CertRep carries a fresh senderNonce.** `Success` and `Fail` reused the request
   senderNonce.
-- **`x509util.CreateCertificateRequest` signs with SHA-1 when the template asks for it.** A
-  request with a challenge password and `SHA1WithRSA` or `ECDSAWithSHA1` failed with "unknown
-  SignatureAlgorithm".
+- **`x509util.CreateCertificateRequest` signs a request with a challenge password with the algorithm
+  the template asks for.** `SHA1WithRSA` and `ECDSAWithSHA1` failed with "unknown
+  SignatureAlgorithm". The RSA-PSS algorithms produced a PKCS #1 v1.5 signature that does not
+  verify.
