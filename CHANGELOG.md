@@ -24,8 +24,8 @@ changes, which the Changed and Removed sections list.
   `GetNextCACert`. It picks the digest, cipher and HTTP method from the server capabilities,
   retries HTTP 503 answers, reports each wait through `Options.OnBusy` and limits response size.
   An empty answer to GetCACert, GetCACertChain or GetNextCACert returns `ErrEmptyResponse`. A
-  CertRep is read whatever the HTTP status of its answer, and other error answers return
-  `HTTPError`.
+  CertRep is read whatever the HTTP status of its answer. Other error answers return `HTTPError`
+  with the Content-Type and the start of the body, which is left out when it is not text.
   `SortCACertificates` sorts a GetCACert answer into the CA, the RSA certificates requests are
   encrypted for and the certificates allowed to sign answers. Without an RSA certificate to
   encrypt for, requests return `ErrNoRSARecipient` before anything is sent.
