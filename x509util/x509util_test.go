@@ -51,7 +51,7 @@ func TestCreateCertificateRequest(t *testing.T) {
 }
 
 // TestCreateCertificateRequestSignatureAlgorithm checks that a request with a challenge password is
-// signed with the requested algorithm, including SHA-1, which older SCEP servers expect.
+// signed with the requested algorithm, including SHA-1, which older SCEP servers expect, and RSA-PSS.
 func TestCreateCertificateRequestSignatureAlgorithm(t *testing.T) {
 	rsaKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
@@ -68,6 +68,8 @@ func TestCreateCertificateRequestSignatureAlgorithm(t *testing.T) {
 		{rsaKey, x509.SHA1WithRSA},
 		{rsaKey, x509.SHA256WithRSA},
 		{rsaKey, x509.SHA512WithRSA},
+		{rsaKey, x509.SHA256WithRSAPSS},
+		{rsaKey, x509.SHA512WithRSAPSS},
 		{ecKey, x509.ECDSAWithSHA1},
 		{ecKey, x509.ECDSAWithSHA384},
 	}
