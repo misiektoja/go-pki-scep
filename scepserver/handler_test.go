@@ -375,8 +375,8 @@ type recordingMinimalCA struct {
 	*refusalLog
 }
 
-// TestRefusalRecorder covers the refusals the handler reports to the CA: those it answers without
-// the CA, and none of the outcomes the CA returns itself.
+// TestRefusalRecorder covers the refusals the handler reports to the CA. It reports those it
+// answers without the CA and none of the outcomes the CA returns itself.
 func TestRefusalRecorder(t *testing.T) {
 	t.Parallel()
 	ca := testca.New(t, testca.Options{})
