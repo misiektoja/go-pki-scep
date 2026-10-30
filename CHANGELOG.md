@@ -18,7 +18,9 @@ changes, which the Changed and Removed sections list.
   complete the request on a later CertPoll, return a failInfo, or ask the client to retry later
   with HTTP 503 and `Retry-After`. GetCert, GetCRL, GetNextCACert and GetCACertChain are optional
   interfaces. Request bodies are limited to 64 KiB by default. Answers use the request digest and
-  cipher unless `Options.Digest` or `Options.ContentEncryption` sets one.
+  cipher unless `Options.Digest` or `Options.ContentEncryption` sets one. A request signed with a
+  key other than RSA gets badAlg with the cause `ErrSignerNotRSA`. A CA that implements
+  `RefusalRecorder` is told about every request the handler refuses without it.
 - **`scepclient`** enrolls, renews, polls and queries a SCEP server: `Enroll`, `Poll`,
   `EnrollAndWait`, `GetCert`, `GetCRL`, `GetCACaps`, `GetCACert`, `GetCACertChain` and
   `GetNextCACert`. It picks the digest, cipher and HTTP method from the server capabilities,
