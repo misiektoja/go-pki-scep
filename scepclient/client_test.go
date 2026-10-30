@@ -9,6 +9,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"io"
 	"maps"
 	"math/big"
@@ -20,6 +21,7 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"unicode"
 
 	"github.com/misiektoja/go-pkcs7"
 
@@ -925,11 +927,14 @@ func TestCertRepWithErrorStatus(t *testing.T) {
 		t.Errorf("Enroll with HTTP 400 = %v, %v, want FAILURE badRequest", res, err)
 	}
 
+	// A binary body is left out of HTTPError, so that its bytes do not reach a terminal or a log.
 	refusals := []struct {
-		name, contentType, body string
+		name, contentType, body, want string
 	}{
-		{"text", "text/plain", "No password in request"},
-		{"broken pki-message", "application/x-pki-message", "not a pkiMessage"},
+		{"text", "text/plain", "No password in request", "No password in request"},
+		{"broken pki-message", "application/x-pki-message", "not a pkiMessage", "not a pkiMessage"},
+		{"binary pki-message", "application/x-pki-message", "\x30\x82\x01\x0a\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01\x07\x02", ""},
+		{"text ending with NUL", "text/plain", "busy\x00", "busy"},
 	}
 	for _, tt := range refusals {
 		refusing := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -944,8 +949,15 @@ func TestCertRepWithErrorStatus(t *testing.T) {
 		client := newClient(t, refusing.URL, scepclient.Options{})
 		_, err := client.Enroll(ctx, certs, enrollRequest(testca.NewRequester(t, "device-3", "secret")))
 		var httpErr *scepclient.HTTPError
-		if !errors.As(err, &httpErr) || httpErr.StatusCode != http.StatusBadRequest || httpErr.Body != tt.body {
-			t.Errorf("%s: Enroll error = %v, want HTTPError 400", tt.name, err)
+		if !errors.As(err, &httpErr) || httpErr.StatusCode != http.StatusBadRequest || httpErr.Body != tt.want ||
+			httpErr.ContentType != tt.contentType {
+			t.Errorf("%s: Enroll error = %q, want HTTPError 400 with body %q", tt.name, err, tt.want)
+		}
+		if tt.want == "" && !strings.Contains(httpErr.Error(), fmt.Sprintf("%d bytes", len(tt.body))) {
+			t.Errorf("%s: error text %q does not give the size of the body", tt.name, httpErr.Error())
+		}
+		if strings.ContainsFunc(httpErr.Error(), unicode.IsControl) {
+			t.Errorf("%s: error text %q holds control characters", tt.name, httpErr.Error())
 		}
 		refusing.Close()
 	}
