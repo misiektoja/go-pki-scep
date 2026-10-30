@@ -26,6 +26,7 @@ import (
 	"sync"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/misiektoja/go-pkcs7"
 
@@ -150,12 +151,20 @@ type HTTPError struct {
 	StatusCode int
 	// RetryAfter is the delay of a Retry-After header in seconds, or zero.
 	RetryAfter time.Duration
-	// Body is the start of the response body.
+	// Body is the start of the response body as one line of text. It is empty when the body is not
+	// text, such as a CertRep that does not parse.
 	Body string
+	// ContentType is the Content-Type header of the answer.
+	ContentType string
+	// binarySize is the size of a body that Body leaves out because it is not text.
+	binarySize int
 }
 
 // Error describes the answer.
 func (e *HTTPError) Error() string {
+	if e.binarySize > 0 {
+		return fmt.Sprintf("scepclient: server answered HTTP %d with %d bytes that are not text", e.StatusCode, e.binarySize)
+	}
 	if e.Body == "" {
 		return fmt.Sprintf("scepclient: server answered HTTP %d", e.StatusCode)
 	}
@@ -357,11 +366,16 @@ type answer struct {
 
 // httpError describes an answer that is not 200 OK.
 func (a *answer) httpError() *HTTPError {
-	return &HTTPError{
-		StatusCode: a.status,
-		RetryAfter: retryAfter(a.header.Get("Retry-After")),
-		Body:       errorBody(a.body),
+	e := &HTTPError{
+		StatusCode:  a.status,
+		RetryAfter:  retryAfter(a.header.Get("Retry-After")),
+		Body:        errorBody(a.body),
+		ContentType: a.header.Get("Content-Type"),
 	}
+	if e.Body == "" && len(bytes.Trim(a.body, " \t\r\n\x00")) > 0 {
+		e.binarySize = len(a.body)
+	}
+	return e
 }
 
 // pkiMessage reports whether the answer carries a pkiMessage. Some servers send a PENDING or FAILURE
@@ -423,16 +437,20 @@ func retryAfter(value string) time.Duration {
 	return time.Duration(min(seconds, int(maxBusyDelay/time.Second))) * time.Second
 }
 
-// errorBody returns the start of an error body as printable text.
+// errorBody returns the start of an error body as one line of text, or "" when the body is not
+// text. Trailing NUL bytes, which some servers append, do not count.
 func errorBody(body []byte) string {
 	const limit = 256
-	text := strings.Map(func(r rune) rune {
-		if r < ' ' || r == 0x7f {
-			return ' '
-		}
-		return r
-	}, string(body[:min(len(body), limit)]))
-	return strings.Join(strings.Fields(text), " ")
+	body = bytes.TrimRight(body, "\x00")
+	isBinary := func(r rune) bool { return unicode.IsControl(r) && !unicode.IsSpace(r) }
+	if !utf8.Valid(body) || bytes.ContainsFunc(body, isBinary) {
+		return ""
+	}
+	text := strings.Join(strings.Fields(string(body)), " ")
+	if len(text) > limit {
+		text = strings.ToValidUTF8(text[:limit], "")
+	}
+	return text
 }
 
 // sleep waits for d or until ctx ends.
