@@ -203,8 +203,13 @@ func addChallenge(
 		return nil, err
 	}
 
+	// The RSA-PSS parameters of sigAlgo name a salt as long as the hash, so the signature must use it.
+	var signerOpts crypto.SignerOpts = hashFunc
+	if sigAlgo.Algorithm.Equal(oidSignatureRSAPSS) {
+		signerOpts = &rsa.PSSOptions{SaltLength: rsa.PSSSaltLengthEqualsHash, Hash: hashFunc}
+	}
 	var signature []byte
-	signature, err = key.Sign(reader, h.Sum(nil), hashFunc)
+	signature, err = key.Sign(reader, h.Sum(nil), signerOpts)
 	if err != nil {
 		return nil, err
 	}
