@@ -62,10 +62,10 @@ interop: ## Run the interop tests against the SCEP tools on the PATH.
 VERSION ?=
 # Artifacts without a release, such as a local SBOM run, are named after the commit instead.
 SBOM_VERSION := $(if $(VERSION),$(VERSION),$(shell git rev-parse --short HEAD))
-SOURCE_ZIP = dist/go-scep-$(VERSION)-source.zip
-SOURCE_TAR_GZ = dist/go-scep-$(VERSION)-source.tar.gz
-SBOM_FILE = dist/go-scep-$(SBOM_VERSION)-sbom.cdx.json
-RELEASE_CHECKSUMS = dist/go-scep-$(VERSION)_SHA256SUMS.txt
+SOURCE_ZIP = dist/go-pki-scep-$(VERSION)-source.zip
+SOURCE_TAR_GZ = dist/go-pki-scep-$(VERSION)-source.tar.gz
+SBOM_FILE = dist/go-pki-scep-$(SBOM_VERSION)-sbom.cdx.json
+RELEASE_CHECKSUMS = dist/go-pki-scep-$(VERSION)_SHA256SUMS.txt
 # RELEASE_CHECK_DIR holds the export and the consumer module. It must not exist yet.
 RELEASE_CHECK_DIR ?= $(CURDIR)/.cache/release-check
 

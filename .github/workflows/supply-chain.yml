@@ -85,6 +85,6 @@ jobs:
       - name: Publish the SBOM
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: go-scep-sbom
-          path: dist/go-scep-*-sbom.cdx.json
+          name: go-pki-scep-sbom
+          path: dist/go-pki-scep-*-sbom.cdx.json
           if-no-files-found: error
