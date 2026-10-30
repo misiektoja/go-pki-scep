@@ -73,6 +73,17 @@ type ChainGetter interface {
 	CACertificateChain(ctx context.Context, name string) ([]*x509.Certificate, error)
 }
 
+// RefusalRecorder is implemented by a CA that records the requests the handler refuses without
+// passing them to the CA: a signer certificate without an RSA key, a pkiEnvelope that does not
+// decrypt or uses a refused cipher, an operation the CA does not implement and a message type that
+// is not a request.
+type RefusalRecorder interface {
+	// RecordRefusal is called before the FAILURE answer is sent. The pkiEnvelope of req may not be
+	// decrypted, so its CSR and query fields can be empty. failure.Err holds the cause, such as
+	// ErrSignerNotRSA.
+	RecordRefusal(ctx context.Context, req *Request, failure *Failure)
+}
+
 // Responder is the CA or RA identity that decrypts the requests for one CA and signs its answers.
 type Responder struct {
 	// SignerCertificate and SignerKey sign CertRep messages and GetNextCACert answers. Requesters
@@ -125,6 +136,11 @@ var ErrPending = errors.New("scepserver: request pending")
 // ErrNotFound reports a CA name, recipient or next CA certificate the CA does not have. A GetCACert
 // or GetNextCACert gets HTTP 404 and a PKIOperation gets HTTP 400.
 var ErrNotFound = errors.New("scepserver: not found")
+
+// ErrSignerNotRSA is the cause of the badAlg answer to a request whose signer certificate has no
+// RSA key. The answer is encrypted for that certificate, and only RSA key transport is supported.
+// A device with an ECDSA key can sign its request with a separate RSA key and certificate.
+var ErrSignerNotRSA = errors.New("scepserver: the request signer certificate has no RSA key")
 
 // Failure refuses a request with a SCEP failInfo.
 type Failure struct {

@@ -300,8 +300,7 @@ func (h *Handler) pkiOperation(w http.ResponseWriter, r *http.Request, query url
 	req := &Request{Message: msg, Responder: responder, HTTPRequest: r}
 	if _, ok := msg.SignerCertificate.PublicKey.(*rsa.PublicKey); !ok {
 		// The answer is encrypted for the signer certificate, which needs an RSA key.
-		err := errors.New("the requester certificate has no RSA key")
-		h.answer(w, r, req, result{}, &Failure{Info: scep.BadAlg, Err: err})
+		h.answer(w, r, req, result{}, h.refusal(req, &Failure{Info: scep.BadAlg, Err: ErrSignerNotRSA}))
 		return
 	}
 	cert, key, err := responder.decrypter()
@@ -310,7 +309,7 @@ func (h *Handler) pkiOperation(w http.ResponseWriter, r *http.Request, query url
 		return
 	}
 	if err := msg.DecryptPKIEnvelope(cert, key, h.opts.Decrypt); err != nil {
-		h.answer(w, r, req, result{}, &Failure{Info: decryptFailInfo(err), Err: err})
+		h.answer(w, r, req, result{}, h.refusal(req, &Failure{Info: decryptFailInfo(err), Err: err}))
 		return
 	}
 	res, err := h.dispatch(req)
@@ -401,20 +400,30 @@ func (h *Handler) dispatch(req *Request) (result, error) {
 	case scep.GetCert:
 		getter, ok := h.ca.(CertificateGetter)
 		if !ok {
-			return result{}, &Failure{Info: scep.BadRequest, Err: errors.New("GetCert is not supported")}
+			return result{}, h.refusal(req, &Failure{Info: scep.BadRequest, Err: errors.New("GetCert is not supported")})
 		}
 		certs, err := getter.GetCert(ctx, req)
 		return result{certs: certs}, err
 	case scep.GetCRL:
 		getter, ok := h.ca.(CRLGetter)
 		if !ok {
-			return result{}, &Failure{Info: scep.BadRequest, Err: errors.New("GetCRL is not supported")}
+			return result{}, h.refusal(req, &Failure{Info: scep.BadRequest, Err: errors.New("GetCRL is not supported")})
 		}
 		crl, err := getter.GetCRL(ctx, req)
 		return result{crl: crl}, err
 	default:
-		return result{}, &Failure{Info: scep.BadRequest, Err: fmt.Errorf("%s is not a request", req.Message.MessageType)}
+		err := fmt.Errorf("%s is not a request", req.Message.MessageType)
+		return result{}, h.refusal(req, &Failure{Info: scep.BadRequest, Err: err})
 	}
+}
+
+// refusal reports a failure the handler decides itself to a CA that implements RefusalRecorder and
+// returns it.
+func (h *Handler) refusal(req *Request, failure *Failure) *Failure {
+	if recorder, ok := h.ca.(RefusalRecorder); ok {
+		recorder.RecordRefusal(req.HTTPRequest.Context(), req, failure)
+	}
+	return failure
 }
 
 // answer writes the CertRep for the CA outcome, an HTTP 503 for a *Busy or an HTTP 500 for any
