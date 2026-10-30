@@ -167,7 +167,7 @@ jobs:
           ejbca config scep addalias --alias scep
           challenge=$(openssl rand -hex 16)
           echo "::add-mask::$challenge"
-          for cn in go-scep-ejbca go-scep-ejbca-wrong go-scep-ejbca-none; do
+          for cn in go-pki-scep-ejbca go-pki-scep-ejbca-wrong go-pki-scep-ejbca-none; do
             ejbca ra addendentity --username "$cn" --dn "CN=$cn" --caname "$SCEP_INTEROP_EJBCA_CA" --type 1 --token USERGENERATED --password "$challenge" --certprofile ENDUSER --eeprofile EMPTY
           done
           echo "SCEP_INTEROP_EJBCA_CHALLENGE=$challenge" >> "$GITHUB_ENV"

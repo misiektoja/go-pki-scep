@@ -43,7 +43,7 @@ func TestMicroMDMServer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	requester := testca.NewRequester(t, "go-scep-device", challenge)
+	requester := testca.NewRequester(t, "go-pki-scep-device", challenge)
 	res, err := client.Enroll(ctx, certs, enrollRequest(requester))
 	if err != nil {
 		t.Fatal(err)
@@ -56,7 +56,7 @@ func TestMicroMDMServer(t *testing.T) {
 	}
 	t.Logf("answer signed with %v, encrypted with %v", res.Response.Digest, res.Response.ContentEncryption)
 
-	refused, err := client.Enroll(ctx, certs, enrollRequest(testca.NewRequester(t, "go-scep-device-2", challenge+"-wrong")))
+	refused, err := client.Enroll(ctx, certs, enrollRequest(testca.NewRequester(t, "go-pki-scep-device-2", challenge+"-wrong")))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,8 +67,8 @@ func TestMicroMDMServer(t *testing.T) {
 
 // TestEJBCAServer enrolls with an EJBCA Community Edition server that the Interop workflow starts.
 // SCEP_INTEROP_EJBCA_URL is its SCEP URL, SCEP_INTEROP_EJBCA_CA the CA name and
-// SCEP_INTEROP_EJBCA_CHALLENGE the password of the end entities go-scep-ejbca,
-// go-scep-ejbca-wrong and go-scep-ejbca-none. In SCEP CA mode EJBCA takes the CSR common name as
+// SCEP_INTEROP_EJBCA_CHALLENGE the password of the end entities go-pki-scep-ejbca,
+// go-pki-scep-ejbca-wrong and go-pki-scep-ejbca-none. In SCEP CA mode EJBCA takes the CSR common name as
 // the end entity and its password as the challenge password.
 func TestEJBCAServer(t *testing.T) {
 	url := os.Getenv("SCEP_INTEROP_EJBCA_URL")
@@ -100,7 +100,7 @@ func TestEJBCAServer(t *testing.T) {
 		t.Errorf("GetCACertChain: %v", err)
 	}
 
-	requester := testca.NewRequester(t, "go-scep-ejbca", challenge)
+	requester := testca.NewRequester(t, "go-pki-scep-ejbca", challenge)
 	res, err := client.Enroll(ctx, certs, enrollRequest(requester))
 	if err != nil {
 		t.Fatal(err)
@@ -114,7 +114,7 @@ func TestEJBCAServer(t *testing.T) {
 	t.Logf("answer signed with %v, encrypted with %v", res.Response.Digest, res.Response.ContentEncryption)
 
 	// EJBCA accepts an end entity password once, then answers with a FAILURE CertRep.
-	again, err := client.Enroll(ctx, certs, enrollRequest(testca.NewRequester(t, "go-scep-ejbca", challenge)))
+	again, err := client.Enroll(ctx, certs, enrollRequest(testca.NewRequester(t, "go-pki-scep-ejbca", challenge)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -127,8 +127,8 @@ func TestEJBCAServer(t *testing.T) {
 		name, cn, challenge string
 		status              int
 	}{
-		{"wrong password", "go-scep-ejbca-wrong", challenge + "-wrong", http.StatusUnauthorized},
-		{"no password", "go-scep-ejbca-none", "", http.StatusBadRequest},
+		{"wrong password", "go-pki-scep-ejbca-wrong", challenge + "-wrong", http.StatusUnauthorized},
+		{"no password", "go-pki-scep-ejbca-none", "", http.StatusBadRequest},
 	} {
 		_, err := client.Enroll(ctx, certs, enrollRequest(testca.NewRequester(t, tc.cn, tc.challenge)))
 		if httpErr, ok := errors.AsType[*scepclient.HTTPError](err); !ok || httpErr.StatusCode != tc.status {
