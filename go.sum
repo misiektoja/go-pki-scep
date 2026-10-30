@@ -1,2 +1,2 @@
-github.com/misiektoja/go-pkcs7 v0.0.0-20261029165212-e5f42aec82e0 h1:487yHPHVqPLbJrDj5OuIO11jUQA5krwehN7FWDi0YqQ=
-github.com/misiektoja/go-pkcs7 v0.0.0-20261029165212-e5f42aec82e0/go.mod h1:1wmKgcxbA03VQmh2T11C8NYNqmzJTlRiWYg3nh9e/6c=
+github.com/misiektoja/go-pkcs7 v0.3.0 h1:8+ou/XtNiV0eoRZ59DWxxQRHwcT7UvNj1Djg6+YvUts=
+github.com/misiektoja/go-pkcs7 v0.3.0/go.mod h1:1wmKgcxbA03VQmh2T11C8NYNqmzJTlRiWYg3nh9e/6c=
