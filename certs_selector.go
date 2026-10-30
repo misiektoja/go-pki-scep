@@ -25,7 +25,7 @@ func NopCertsSelector() CertsSelectorFunc {
 	}
 }
 
-// A EnciphermentCertsSelector returns a CertsSelectorFunc that selects
+// EnciphermentCertsSelector returns a CertsSelectorFunc that selects
 // certificates eligible for key encipherment. This certsSelector can be used
 // to filter PKCSReq recipients.
 func EnciphermentCertsSelector() CertsSelectorFunc {

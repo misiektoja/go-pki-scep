@@ -1,0 +1,180 @@
+# Runs real SCEP peers against this module: sscep and the micromdm/scep client against the server
+# handler, and the client against the micromdm/scep server and EJBCA Community Edition. The peers
+# are built from pinned sources or run from images pinned by digest.
+# SCEP_INTEROP=required makes a test fail rather than skip when its peer is missing.
+name: Interop
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+  schedule:
+    # A weekly run catches a toolchain or runner change that breaks a peer build.
+    - cron: "29 5 * * 1"
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # sscep v0.10.0
+  SSCEP_COMMIT: b3f9798d56d0f6474b491204ff426d80fd4010a7
+  MICROMDM_SCEP_VERSION: v2.3.0
+  EJBCA_IMAGE: keyfactor/ejbca-ce:9.6.3@sha256:ef574ed81c1e2bb335902f1097b09f9408fe32f2c3abbccfe80999d1c9b50164
+  SCEP_INTEROP: required
+
+jobs:
+  sscep:
+    permissions:
+      contents: read
+    name: sscep against the server
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Clone the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Build sscep
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake libssl-dev
+          src="$RUNNER_TEMP/sscep"
+          git init -q "$src"
+          git -C "$src" fetch -q --depth 1 https://github.com/certnanny/sscep "$SSCEP_COMMIT"
+          git -C "$src" checkout -q --detach FETCH_HEAD
+          # sscep declares a CMake minimum older than 3.5, which CMake 4 refuses without this policy floor.
+          cmake -S "$src" -B "$src/build" -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          cmake --build "$src/build" -j "$(nproc)"
+          echo "SSCEP=$src/build/sscep" >> "$GITHUB_ENV"
+
+      - name: Run sscep against the handler
+        run: make interop INTEROP_RUN=TestSSCEP
+
+  micromdm-client:
+    permissions:
+      contents: read
+    name: micromdm/scep client against the server
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Clone the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Install the micromdm/scep client
+        run: |
+          GOBIN="$RUNNER_TEMP/bin" go install "github.com/micromdm/scep/v2/cmd/scepclient@${MICROMDM_SCEP_VERSION}"
+          echo "MICROMDM_SCEPCLIENT=$RUNNER_TEMP/bin/scepclient" >> "$GITHUB_ENV"
+
+      - name: Run the micromdm/scep client against the handler
+        run: make interop INTEROP_RUN=TestMicroMDMClient
+
+  micromdm-server:
+    permissions:
+      contents: read
+    name: Client against the micromdm/scep server
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SCEP_INTEROP_MICROMDM_URL: http://127.0.0.1:2016/scep
+      SCEP_INTEROP_MICROMDM_CHALLENGE: interop-secret
+    steps:
+      - name: Clone the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Start the micromdm/scep server
+        run: |
+          GOBIN="$RUNNER_TEMP/bin" go install "github.com/micromdm/scep/v2/cmd/scepserver@${MICROMDM_SCEP_VERSION}"
+          cd "$RUNNER_TEMP"
+          bin/scepserver ca -init -depot depot
+          nohup bin/scepserver -depot depot -port 2016 -challenge "$SCEP_INTEROP_MICROMDM_CHALLENGE" > scepserver.log 2>&1 &
+          for _ in $(seq 1 30); do
+            if curl -sf "${SCEP_INTEROP_MICROMDM_URL}?operation=GetCACaps" > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat scepserver.log
+          exit 1
+
+      - name: Run the client against the micromdm/scep server
+        run: make interop INTEROP_RUN=TestMicroMDMServer
+
+      - name: Show the server log
+        if: failure()
+        run: cat "$RUNNER_TEMP/scepserver.log"
+
+  ejbca-server:
+    permissions:
+      contents: read
+    name: Client against the EJBCA CE server
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SCEP_INTEROP_EJBCA_URL: http://127.0.0.1:8080/ejbca/publicweb/apply/scep/scep/pkiclient.exe
+      SCEP_INTEROP_EJBCA_CA: InteropSub
+    steps:
+      - name: Clone the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Start EJBCA
+        run: |
+          docker run -d --name ejbca -p 127.0.0.1:8080:8080 -e TLS_SETUP_ENABLED=true "$EJBCA_IMAGE"
+          for _ in $(seq 1 150); do
+            if curl -sf http://127.0.0.1:8080/ejbca/publicweb/healthcheck/ejbcahealth > /dev/null; then exit 0; fi
+            sleep 2
+          done
+          docker logs ejbca
+          exit 1
+
+      - name: Create the CAs, the SCEP alias and the end entities
+        run: |
+          ejbca() { docker exec ejbca /opt/keyfactor/bin/ejbca.sh "$@"; }
+          # SCEP needs an RSA CA. The CA the container creates at startup is ECDSA.
+          ejbca ca init --caname InteropRoot --dn "CN=Interop Root CA,O=Example" --tokenType soft --tokenPass null --keyspec 2048 --keytype RSA -v 3650 --policy null -s SHA256WithRSA
+          root_id=$(ejbca ca info --caname InteropRoot | sed -n 's/.*(main) CA ID: //p')
+          ejbca ca init --caname "$SCEP_INTEROP_EJBCA_CA" --dn "CN=Interop Sub CA,O=Example" --tokenType soft --tokenPass null --keyspec 2048 --keytype RSA -v 1825 --policy null -s SHA256WithRSA --signedby "$root_id"
+          # The alias defaults to CA mode, where the CSR common name names the end entity.
+          ejbca config scep addalias --alias scep
+          challenge=$(openssl rand -hex 16)
+          echo "::add-mask::$challenge"
+          for cn in go-pki-scep-ejbca go-pki-scep-ejbca-wrong go-pki-scep-ejbca-none; do
+            ejbca ra addendentity --username "$cn" --dn "CN=$cn" --caname "$SCEP_INTEROP_EJBCA_CA" --type 1 --token USERGENERATED --password "$challenge" --certprofile ENDUSER --eeprofile EMPTY
+          done
+          echo "SCEP_INTEROP_EJBCA_CHALLENGE=$challenge" >> "$GITHUB_ENV"
+
+      - name: Run the client against EJBCA
+        run: make interop INTEROP_RUN=TestEJBCAServer
+
+      - name: Show the server log
+        if: failure()
+        run: docker logs ejbca 2>&1 | tail -300

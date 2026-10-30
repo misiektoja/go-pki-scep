@@ -28,6 +28,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+// Package x509util creates certificate requests that carry a challengePassword attribute and reads
+// that attribute back. crypto/x509 cannot add it.
 package x509util
 
 import (
@@ -115,8 +117,7 @@ func ParseChallengePassword(asn1Data []byte) (string, error) {
 	if err != nil {
 		return "", err
 	} else if len(rest) != 0 {
-		err = asn1.SyntaxError{Msg: "trailing data"}
-		return "", err
+		return "", errTrailingData
 	}
 
 	var password string
@@ -158,7 +159,7 @@ func addChallenge(
 	if err != nil {
 		return nil, err
 	} else if len(rest) != 0 {
-		err = asn1.SyntaxError{Msg: "trailing data"}
+		err = errTrailingData
 		return nil, err
 	}
 
@@ -176,7 +177,7 @@ func addChallenge(
 	if err != nil {
 		return nil, err
 	} else if len(rest) != 0 {
-		err = asn1.SyntaxError{Msg: "trailing data"}
+		err = errTrailingData
 		return nil, err
 	}
 
@@ -202,8 +203,13 @@ func addChallenge(
 		return nil, err
 	}
 
+	// The RSA-PSS parameters of sigAlgo name a salt as long as the hash, so the signature must use it.
+	var signerOpts crypto.SignerOpts = hashFunc
+	if sigAlgo.Algorithm.Equal(oidSignatureRSAPSS) {
+		signerOpts = &rsa.PSSOptions{SaltLength: rsa.PSSSaltLengthEqualsHash, Hash: hashFunc}
+	}
 	var signature []byte
-	signature, err = key.Sign(reader, h.Sum(nil), hashFunc)
+	signature, err = key.Sign(reader, h.Sum(nil), signerOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +227,7 @@ func addChallenge(
 // signingParamsForPublicKey returns the parameters to use for signing with
 // priv. If requestedSigAlgo is not zero then it overrides the default
 // signature algorithm.
-func signingParamsForPublicKey(pub interface{}, requestedSigAlgo x509.SignatureAlgorithm) (hashFunc crypto.Hash, sigAlgo pkix.AlgorithmIdentifier, err error) {
+func signingParamsForPublicKey(pub any, requestedSigAlgo x509.SignatureAlgorithm) (hashFunc crypto.Hash, sigAlgo pkix.AlgorithmIdentifier, err error) {
 	var pubType x509.PublicKeyAlgorithm
 
 	switch pub := pub.(type) {
@@ -253,11 +259,11 @@ func signingParamsForPublicKey(pub interface{}, requestedSigAlgo x509.SignatureA
 	}
 
 	if err != nil {
-		return
+		return hashFunc, sigAlgo, err
 	}
 
 	if requestedSigAlgo == 0 {
-		return
+		return hashFunc, sigAlgo, err
 	}
 
 	found := false
@@ -268,12 +274,12 @@ func signingParamsForPublicKey(pub interface{}, requestedSigAlgo x509.SignatureA
 
 		if details.pubKeyAlgo != pubType {
 			err = errors.New("x509: requested SignatureAlgorithm does not match private key type")
-			return
+			return hashFunc, sigAlgo, err
 		}
 		sigAlgo.Algorithm, hashFunc = details.oid, details.hash
 		if hashFunc == 0 {
 			err = errors.New("x509: cannot sign with hash function requested")
-			return
+			return hashFunc, sigAlgo, err
 		}
 		// copy x509.SignatureAlgorithm.isRSAPSS method
 		isRSAPSS := func() bool {
@@ -295,7 +301,7 @@ func signingParamsForPublicKey(pub interface{}, requestedSigAlgo x509.SignatureA
 		err = errors.New("x509: unknown SignatureAlgorithm")
 	}
 
-	return
+	return hashFunc, sigAlgo, err
 }
 
 var signatureAlgorithmDetails = []struct {
@@ -304,6 +310,7 @@ var signatureAlgorithmDetails = []struct {
 	pubKeyAlgo x509.PublicKeyAlgorithm
 	hash       crypto.Hash
 }{
+	{x509.SHA1WithRSA, oidSignatureSHA1WithRSA, x509.RSA, crypto.SHA1},
 	{x509.SHA256WithRSA, oidSignatureSHA256WithRSA, x509.RSA, crypto.SHA256},
 	{x509.SHA384WithRSA, oidSignatureSHA384WithRSA, x509.RSA, crypto.SHA384},
 	{x509.SHA512WithRSA, oidSignatureSHA512WithRSA, x509.RSA, crypto.SHA512},
@@ -311,17 +318,20 @@ var signatureAlgorithmDetails = []struct {
 	{x509.SHA384WithRSAPSS, oidSignatureRSAPSS, x509.RSA, crypto.SHA384},
 	{x509.SHA512WithRSAPSS, oidSignatureRSAPSS, x509.RSA, crypto.SHA512},
 	{x509.DSAWithSHA256, oidSignatureDSAWithSHA256, x509.DSA, crypto.SHA256},
+	{x509.ECDSAWithSHA1, oidSignatureECDSAWithSHA1, x509.ECDSA, crypto.SHA1},
 	{x509.ECDSAWithSHA256, oidSignatureECDSAWithSHA256, x509.ECDSA, crypto.SHA256},
 	{x509.ECDSAWithSHA384, oidSignatureECDSAWithSHA384, x509.ECDSA, crypto.SHA384},
 	{x509.ECDSAWithSHA512, oidSignatureECDSAWithSHA512, x509.ECDSA, crypto.SHA512},
 }
 
 var (
+	oidSignatureSHA1WithRSA     = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 5}
 	oidSignatureSHA256WithRSA   = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 11}
 	oidSignatureSHA384WithRSA   = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 12}
 	oidSignatureSHA512WithRSA   = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 13}
 	oidSignatureRSAPSS          = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 10}
 	oidSignatureDSAWithSHA256   = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 3, 2}
+	oidSignatureECDSAWithSHA1   = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 1}
 	oidSignatureECDSAWithSHA256 = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 2}
 	oidSignatureECDSAWithSHA384 = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 3}
 	oidSignatureECDSAWithSHA512 = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 4}
@@ -334,6 +344,9 @@ var (
 
 	oidChallengePassword = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 7}
 )
+
+// errTrailingData reports DER input that continues after the structure it holds.
+var errTrailingData error = asn1.SyntaxError{Msg: "trailing data"}
 
 // added to Go in 1.9
 var asn1NullRawValue = asn1.RawValue{
@@ -362,7 +375,8 @@ func rsaPSSParameters(hashFunc crypto.Hash) asn1.RawValue {
 		hashOID = oidSHA256
 	case crypto.SHA384:
 		hashOID = oidSHA384
-	case crypto.SHA512:
+	default:
+		// SHA-512 is the only other hash of the RSA-PSS signature algorithms.
 		hashOID = oidSHA512
 	}
 

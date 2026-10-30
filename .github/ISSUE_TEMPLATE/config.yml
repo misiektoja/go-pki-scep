@@ -1,8 +1,11 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
 contact_links:
-  - name: Ask on Discord
-    url: https://discord.gg/7xgjhVAg6g
-    about: You can ask for help here!
-  - name: Want to contribute to scep?
-    url: https://github.com/smallstep/cli/blob/master/docs/CONTRIBUTING.md
-    about: Be sure to read contributing guidelines!
+  - name: Report a vulnerability
+    url: https://github.com/misiektoja/go-pki-scep/security/advisories/new
+    about: Report privately through GitHub. Never open a public issue for a suspected vulnerability.
+  - name: Package documentation
+    url: https://pkg.go.dev/github.com/misiektoja/go-pki-scep
+    about: Every exported type and the options of the message layer, the server handler and the client.
+  - name: Question or idea
+    url: https://github.com/misiektoja/go-pki-scep/discussions
+    about: Ask about usage or discuss an approach before opening an issue.

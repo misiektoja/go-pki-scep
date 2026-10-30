@@ -21,3 +21,9 @@ coverage.cov
 
 # Dependency directories (remove the comment below to include it)
 /vendor
+
+# Release artifacts, pinned tools and the release check export
+dist/
+bin/
+.cache/
+.envrc
