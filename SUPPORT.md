@@ -2,7 +2,7 @@
 
 Start with the [README](README.md), which covers the supported operations, the security defaults
 and the server behavior the client copes with. The package documentation on
-[pkg.go.dev](https://pkg.go.dev/github.com/misiektoja/go-scep) describes every exported type.
+[pkg.go.dev](https://pkg.go.dev/github.com/misiektoja/go-pki-scep) describes every exported type.
 
 ## Check your setup first
 
@@ -21,15 +21,15 @@ Many problems come from limits the library applies on purpose. Before asking, co
 
 | You want to | Go to |
 | --- | --- |
-| Ask a usage question or discuss an idea | [Discussions](https://github.com/misiektoja/go-scep/discussions) |
-| Report something broken | [Bug report](https://github.com/misiektoja/go-scep/issues/new?template=bug_report.yml) |
-| Request a capability | [Feature request](https://github.com/misiektoja/go-scep/issues/new?template=feature_request.yml) |
-| Report a vulnerability | [Private security advisory](https://github.com/misiektoja/go-scep/security/advisories/new), never a public issue |
+| Ask a usage question or discuss an idea | [Discussions](https://github.com/misiektoja/go-pki-scep/discussions) |
+| Report something broken | [Bug report](https://github.com/misiektoja/go-pki-scep/issues/new?template=bug_report.yml) |
+| Request a capability | [Feature request](https://github.com/misiektoja/go-pki-scep/issues/new?template=feature_request.yml) |
+| Report a vulnerability | [Private security advisory](https://github.com/misiektoja/go-pki-scep/security/advisories/new), never a public issue |
 | Contribute a change | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
 ## Before you post
 
-Include the go-scep version, the Go version, the device or server on the other side and its
+Include the go-pki-scep version, the Go version, the device or server on the other side and its
 version and the algorithms involved. Attach the error and, where you can, a request or answer
 captured with a throwaway key.
 

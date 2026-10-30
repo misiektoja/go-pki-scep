@@ -1,16 +1,16 @@
-# go-scep
+# go-pki-scep
 
-[![GitHub Release](https://img.shields.io/github/v/release/misiektoja/go-scep?style=flat-square&color=blue)](https://github.com/misiektoja/go-scep/releases)
-[![Go Reference](https://pkg.go.dev/badge/github.com/misiektoja/go-scep.svg)](https://pkg.go.dev/github.com/misiektoja/go-scep)
+[![GitHub Release](https://img.shields.io/github/v/release/misiektoja/go-pki-scep?style=flat-square&color=blue)](https://github.com/misiektoja/go-pki-scep/releases)
+[![Go Reference](https://pkg.go.dev/badge/github.com/misiektoja/go-pki-scep.svg)](https://pkg.go.dev/github.com/misiektoja/go-pki-scep)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
-[![Tests](https://github.com/misiektoja/go-scep/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/misiektoja/go-scep/actions/workflows/test.yml)
-[![Interop](https://github.com/misiektoja/go-scep/actions/workflows/interop.yml/badge.svg?branch=main)](https://github.com/misiektoja/go-scep/actions/workflows/interop.yml)
-[![Supply chain](https://github.com/misiektoja/go-scep/actions/workflows/supply-chain.yml/badge.svg?branch=main)](https://github.com/misiektoja/go-scep/actions/workflows/supply-chain.yml)
-[![OpenSSF Scorecard](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.scorecard.dev%2Fprojects%2Fgithub.com%2Fmisiektoja%2Fgo-scep&query=%24.score&label=openssf%20scorecard&style=flat-square)](https://scorecard.dev/viewer/?uri=github.com/misiektoja/go-scep)
+[![Tests](https://github.com/misiektoja/go-pki-scep/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/misiektoja/go-pki-scep/actions/workflows/test.yml)
+[![Interop](https://github.com/misiektoja/go-pki-scep/actions/workflows/interop.yml/badge.svg?branch=main)](https://github.com/misiektoja/go-pki-scep/actions/workflows/interop.yml)
+[![Supply chain](https://github.com/misiektoja/go-pki-scep/actions/workflows/supply-chain.yml/badge.svg?branch=main)](https://github.com/misiektoja/go-pki-scep/actions/workflows/supply-chain.yml)
+[![OpenSSF Scorecard](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.scorecard.dev%2Fprojects%2Fgithub.com%2Fmisiektoja%2Fgo-pki-scep&query=%24.score&label=openssf%20scorecard&style=flat-square)](https://scorecard.dev/viewer/?uri=github.com/misiektoja/go-pki-scep)
 
-go-scep is a Go implementation of the Simple Certificate Enrollment Protocol (SCEP, RFC 8894), the
-protocol routers, VPN gateways, mobile device managers and other network devices use to request
-certificates from a CA. It has three packages:
+go-pki-scep is a Go implementation of the Simple Certificate Enrollment Protocol
+(SCEP, RFC 8894), the protocol routers, VPN gateways, mobile device managers and other network
+devices use to request certificates from a CA. It has three packages:
 
 * `scep` builds and parses the SCEP messages.
 * `scepserver` is an HTTP handler that serves SCEP for a CA you implement.
@@ -35,7 +35,7 @@ made per call through option structs. Nothing is configured through package vari
 ## Install
 
 ```bash
-go get github.com/misiektoja/go-scep
+go get github.com/misiektoja/go-pki-scep
 ```
 
 The module needs Go 1.27.3 or newer. Its only dependency is go-pkcs7. The API may still change
@@ -166,7 +166,7 @@ The Interop workflow runs these peers on every change:
 
 ## Documentation
 
-The package documentation on [pkg.go.dev](https://pkg.go.dev/github.com/misiektoja/go-scep)
+The package documentation on [pkg.go.dev](https://pkg.go.dev/github.com/misiektoja/go-pki-scep)
 describes every exported type and option. Repository files:
 
 * [SUPPORT.md](SUPPORT.md) explains where to ask and what to include.
@@ -181,8 +181,8 @@ describes every exported type and option. Repository files:
   certificate and answers for the request signer certificate, with RSA key transport as RFC 8894
   requires. The handler answers a request signed with another key type with badAlg and the cause
   `ErrSignerNotRSA`. RFC 8894 section 3.1 encrypts answers for such keys with the challenge
-  password through PasswordRecipientInfo, which go-scep does not support. A CSR may still carry an
-  ECDSA key when an RSA certificate signs the request.
+  password through PasswordRecipientInfo, which go-pki-scep does not support. A CSR may still carry
+  an ECDSA key when an RSA certificate signs the request.
 * **No storage.** The CA implementation keeps pending requests, issued certificates and CRLs.
 * **No CA chain validation in the client.** The caller decides whether to trust the GetCACert
   answer, such as by a pinned fingerprint.
@@ -193,7 +193,7 @@ describes every exported type and option. Repository files:
 
 ## Credits
 
-go-scep continues the work of these projects and their contributors:
+go-pki-scep continues the work of these projects and their contributors:
 
 * [micromdm/scep](https://github.com/micromdm/scep), the original implementation by Victor
   Vrantchan and the MicroMDM contributors.

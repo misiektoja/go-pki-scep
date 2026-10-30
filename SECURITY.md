@@ -4,7 +4,7 @@
 
 Do not open a public issue for a suspected vulnerability.
 
-Report it privately through [GitHub security advisories](https://github.com/misiektoja/go-scep/security/advisories/new), which keeps the report visible only to the maintainer until an advisory is published. If you cannot use that, email <misiektoja-github@rm-rf.ninja>.
+Report it privately through [GitHub security advisories](https://github.com/misiektoja/go-pki-scep/security/advisories/new), which keeps the report visible only to the maintainer until an advisory is published. If you cannot use that, email <misiektoja-github@rm-rf.ninja>.
 
 Do not include private keys, passwords or messages captured from a production system in a report. Include the affected revision, the impact, the preconditions to reproduce it and a sanitized proof, such as a message made with a throwaway key, when you have one.
 
@@ -25,4 +25,4 @@ The targets are what the maintainer works to, not a service commitment.
 
 ## Supported versions
 
-Security fixes are made on the default branch and shipped in the next [GitHub release](https://github.com/misiektoja/go-scep/releases). Only the latest released version is supported. Earlier versions receive no backports.
+Security fixes are made on the default branch and shipped in the next [GitHub release](https://github.com/misiektoja/go-pki-scep/releases). Only the latest released version is supported. Earlier versions receive no backports.

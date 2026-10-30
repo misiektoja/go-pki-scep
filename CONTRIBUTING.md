@@ -1,6 +1,6 @@
 # Contributing
 
-go-scep is a Go implementation of SCEP, the certificate enrollment protocol of RFC 8894. Bug reports, interoperability results and code contributions are welcome. Usage questions belong in Discussions, as [SUPPORT.md](SUPPORT.md) describes.
+go-pki-scep is a Go implementation of SCEP, the certificate enrollment protocol of RFC 8894. Bug reports, interoperability results and code contributions are welcome. Usage questions belong in Discussions, as [SUPPORT.md](SUPPORT.md) describes.
 
 ## Before contributing
 

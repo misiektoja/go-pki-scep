@@ -1,11 +1,11 @@
-go-scep
+go-pki-scep
 
 This product includes software developed as scep
 (https://github.com/micromdm/scep) by Victor Vrantchan and the
 MicroMDM contributors, continued as https://github.com/smallstep/scep,
 licensed under the MIT License.
 
-go-scep is a modified derivative of that work. Files in this
+go-pki-scep is a modified derivative of that work. Files in this
 repository have been changed and added relative to the original.
 The modifications are recorded in the Git history of this
 repository and summarized in CHANGELOG.md.
@@ -14,4 +14,4 @@ x509util/x509util.go contains code from the Go crypto/x509 package,
 Copyright The Go Authors and licensed under the BSD-style license in
 its file header.
 
-Modifications Copyright 2026 the go-scep contributors.
+Modifications Copyright 2026 the go-pki-scep contributors.
