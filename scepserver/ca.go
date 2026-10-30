@@ -138,7 +138,8 @@ var ErrPending = errors.New("scepserver: request pending")
 var ErrNotFound = errors.New("scepserver: not found")
 
 // ErrSignerNotRSA is the cause of the badAlg answer to a request whose signer certificate has no
-// RSA key. The answer is encrypted for that certificate, and only RSA key transport is supported.
+// RSA key. The answer is encrypted for that certificate with RSA key transport, the only kind
+// supported.
 // A device with an ECDSA key can sign its request with a separate RSA key and certificate.
 var ErrSignerNotRSA = errors.New("scepserver: the request signer certificate has no RSA key")
 
