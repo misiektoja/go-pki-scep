@@ -37,20 +37,49 @@ validation:
 
 markdown_extensions:
   - admonition
-  # The pages include sections of the README, so the two cannot drift.
+  # The pages include the example programs and Example functions, which the tests build and run,
+  # so the code on the site compiles.
   - pymdownx.snippets:
       base_path: [.]
       check_paths: true
+      dedent_subsections: true
   - toc:
       permalink: true
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 
 nav:
   - Overview: index.md
-  - Install: install.md
   - Getting started: getting-started.md
-  - Guides:
-      - Supported operations: guide/operations.md
-      - Security defaults: guide/security-defaults.md
-      - Compatibility and interoperability: guide/compatibility.md
-  - Limitations: limitations.md
+  - Support matrix: support-matrix.md
+  - Architecture: architecture.md
+  - Server guide:
+      - Implementing a CA: server/implementing-a-ca.md
+      - Pending requests and throttling: server/pending-requests.md
+      - Optional operations: server/optional-operations.md
+      - Refusals and logging: server/refusals-and-logging.md
+  - Client guide:
+      - CA certificates and trust: client/ca-certificates.md
+      - Enrollment and renewal: client/enrollment.md
+      - Certificates and CRLs: client/certificates-and-crls.md
+      - Capabilities, answers and retries: client/answers-and-retries.md
+  - Message layer: message-layer.md
+  - Reference:
+      - Server options: reference/server-options.md
+      - Client options: reference/client-options.md
+      - Errors and status values: reference/errors.md
+      - Compatibility policy: reference/compatibility.md
+  - Interoperability:
+      - Tested implementations: interoperability/tested-implementations.md
+  - Operations:
+      - Troubleshooting: operations/troubleshooting.md
+  - Security:
+      - Security model: security/security-model.md
+  - Development:
+      - Development: development/development.md
+      - Testing: development/testing.md
+      - Release process: development/release-process.md
+  - Known limitations: known-limitations.md

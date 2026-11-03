@@ -1,17 +1,42 @@
 # go-pki-scep
 
---8<-- "README.md:intro"
+go-pki-scep is a Go implementation of the Simple Certificate Enrollment Protocol (SCEP,
+RFC 8894). Routers, VPN gateways, mobile device managers and other network devices use SCEP to
+request certificates from a CA. The module has three packages:
+
+* `scep` builds and parses SCEP messages and answers requests without any transport.
+* `scepserver` is an `http.Handler` that serves SCEP for a CA you implement.
+* `scepclient` enrolls, renews, polls and queries a SCEP server over HTTP.
+
+The library handles the protocol: message signatures and encryption, nonces, transaction IDs,
+the HTTP operations and the answers. Your code decides who may enroll, issues the certificates and
+keeps whatever state the CA needs. The CMS layer comes from
+[go-pkcs7](https://misiektoja.github.io/go-pkcs7/). Algorithm choices are made per call through
+option structs. Nothing is configured through package variables.
+
+```bash
+go get github.com/misiektoja/go-pki-scep
+```
+
+The module needs Go 1.27.3 or newer. Its only dependency is go-pkcs7.
 
 ## Where to go next
 
 | I want to | Page |
 | --- | --- |
-| Add the module to a Go project | [Install](install.md) |
-| Serve SCEP for my CA or enroll from a Go program | [Getting started](getting-started.md) |
-| See which SCEP operations the handler and the client support | [Supported operations](guide/operations.md) |
-| Know what the library checks and refuses by default | [Security defaults](guide/security-defaults.md) |
-| Connect to a SCEP server that bends the RFC | [Compatibility and interoperability](guide/compatibility.md) |
-| Check what is not supported | [Limitations](limitations.md) |
+| Run a SCEP server and client on my machine | [Getting started](getting-started.md) |
+| See which operations, message types and algorithms are supported | [Support matrix](support-matrix.md) |
+| Understand how the packages and a request fit together | [Architecture](architecture.md) |
+| Serve SCEP for my CA | [Implementing a CA](server/implementing-a-ca.md) |
+| Approve requests later or throttle clients | [Pending requests and throttling](server/pending-requests.md) |
+| Enroll or renew a device from a Go program | [Enrollment and renewal](client/enrollment.md) |
+| Decide whether to trust a CA certificate | [CA certificates and trust](client/ca-certificates.md) |
+| Build SCEP messages without HTTP | [Message layer](message-layer.md) |
+| Look up an option or a default | [Server options](reference/server-options.md) and [Client options](reference/client-options.md) |
+| Find out which SCEP implementations were tested | [Tested implementations](interoperability/tested-implementations.md) |
+| Fix a refused request | [Troubleshooting](operations/troubleshooting.md) |
+| Know what the library checks and what it leaves to me | [Security model](security/security-model.md) |
+| Check what is not supported | [Known limitations](known-limitations.md) |
 | Look up a type or function | [Package documentation](https://pkg.go.dev/github.com/misiektoja/go-pki-scep) |
 | See what changed in a release | [Changelog](https://github.com/misiektoja/go-pki-scep/blob/main/CHANGELOG.md) |
 | Ask for help or report a problem | [Support](https://github.com/misiektoja/go-pki-scep/blob/main/SUPPORT.md) |
@@ -20,7 +45,15 @@
 
 ## Credits
 
---8<-- "README.md:credits"
+go-pki-scep continues the work of these projects and their contributors:
+
+* [micromdm/scep](https://github.com/micromdm/scep), the original implementation by Victor
+  Vrantchan and the MicroMDM contributors.
+* [smallstep/scep](https://github.com/smallstep/scep), the Smallstep fork of the message layer
+  this repository started from.
+
+Both are MIT licensed. [NOTICE](https://github.com/misiektoja/go-pki-scep/blob/main/NOTICE) records
+the origins of the code, including the Go standard library code in `x509util`.
 
 ## Related projects
 
