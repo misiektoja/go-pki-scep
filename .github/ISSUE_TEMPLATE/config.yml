@@ -3,6 +3,9 @@ contact_links:
   - name: Report a vulnerability
     url: https://github.com/misiektoja/go-pki-scep/security/advisories/new
     about: Report privately through GitHub. Never open a public issue for a suspected vulnerability.
+  - name: Documentation
+    url: https://misiektoja.github.io/go-pki-scep/
+    about: Install, getting started, the supported operations, the security defaults, compatibility and the limitations.
   - name: Package documentation
     url: https://pkg.go.dev/github.com/misiektoja/go-pki-scep
     about: Every exported type and the options of the message layer, the server handler and the client.
