@@ -1,0 +1,56 @@
+site_name: go-pki-scep
+site_description: A Go library for the Simple Certificate Enrollment Protocol (SCEP, RFC 8894) with the message layer, an HTTP server handler and an HTTP client
+site_url: https://misiektoja.github.io/go-pki-scep/
+repo_url: https://github.com/misiektoja/go-pki-scep
+repo_name: misiektoja/go-pki-scep
+copyright: Licensed under the MIT License
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+# The pip requirements files live next to the pages for Dependabot but are not pages.
+exclude_docs: |
+  requirements.in
+  requirements.txt
+
+# The documentation build runs with --strict so every one of these findings fails the build.
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
+markdown_extensions:
+  - admonition
+  # The pages include sections of the README, so the two cannot drift.
+  - pymdownx.snippets:
+      base_path: [.]
+      check_paths: true
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+
+nav:
+  - Overview: index.md
+  - Install: install.md
+  - Getting started: getting-started.md
+  - Guides:
+      - Supported operations: guide/operations.md
+      - Security defaults: guide/security-defaults.md
+      - Compatibility and interoperability: guide/compatibility.md
+  - Limitations: limitations.md

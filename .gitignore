@@ -27,3 +27,6 @@ dist/
 bin/
 .cache/
 .envrc
+
+# Documentation site build output
+site/
