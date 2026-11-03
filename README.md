@@ -8,6 +8,7 @@
 [![Supply chain](https://github.com/misiektoja/go-pki-scep/actions/workflows/supply-chain.yml/badge.svg?branch=main)](https://github.com/misiektoja/go-pki-scep/actions/workflows/supply-chain.yml)
 [![OpenSSF Scorecard](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.scorecard.dev%2Fprojects%2Fgithub.com%2Fmisiektoja%2Fgo-pki-scep&query=%24.score&label=openssf%20scorecard&style=flat-square)](https://scorecard.dev/viewer/?uri=github.com/misiektoja/go-pki-scep)
 
+<!-- --8<-- [start:intro] -->
 go-pki-scep is a Go implementation of the Simple Certificate Enrollment Protocol
 (SCEP, RFC 8894), the protocol routers, VPN gateways, mobile device managers and other network
 devices use to request certificates from a CA. It has three packages:
@@ -18,6 +19,7 @@ devices use to request certificates from a CA. It has three packages:
 
 The CMS layer comes from [go-pkcs7](https://github.com/misiektoja/go-pkcs7). Algorithm choices are
 made per call through option structs. Nothing is configured through package variables.
+<!-- --8<-- [end:intro] -->
 
 ## Contents
 
@@ -34,15 +36,19 @@ made per call through option structs. Nothing is configured through package vari
 
 ## Install
 
+<!-- --8<-- [start:install] -->
 ```bash
 go get github.com/misiektoja/go-pki-scep
 ```
 
 The module needs Go 1.27.3 or newer. Its only dependency is go-pkcs7. The API may still change
-before v1.0.0, as [CHANGELOG.md](CHANGELOG.md) records.
+before v1.0.0, as
+[CHANGELOG.md](https://github.com/misiektoja/go-pki-scep/blob/main/CHANGELOG.md) records.
+<!-- --8<-- [end:install] -->
 
 ## Scope
 
+<!-- --8<-- [start:scope] -->
 | Operation | Server handler | Client |
 | --- | --- | --- |
 | GetCACaps | Lists the capabilities, derived from the options or replaced by them | Fetched once and used to pick POST, the digest and the cipher |
@@ -59,9 +65,11 @@ requests, decrypting their content and answering with SUCCESS, PENDING or FAILUR
 
 GetCACertChain is not part of RFC 8894. Some CAs still serve it for older clients. Its answer
 carries no RA certificates, so clients enroll with the GetCACert answer.
+<!-- --8<-- [end:scope] -->
 
 ## Getting started
 
+<!-- --8<-- [start:getting-started] -->
 A server implements `scepserver.CA` and mounts the handler. The CA decides who may enroll, for
 example by checking the challenge password of a PKCSReq:
 
@@ -108,9 +116,11 @@ A PKCSReq is signed with a self-signed certificate for the CSR key. A RenewalReq
 certificate being renewed. `x509util.CreateCertificateRequest` adds the challenge password to a CSR.
 For a CSR with an ECDSA key, sign the PKCSReq with a separate RSA key and its self-signed
 certificate, because the answer is encrypted for the signer certificate.
+<!-- --8<-- [end:getting-started] -->
 
 ## Security defaults
 
+<!-- --8<-- [start:security-defaults] -->
 * **CertRep signers** are restricted. The client accepts a CertRep only when one of the CA or RA
   certificates from GetCACert signed it, even when the message carries its own certificate.
 * **Answers are matched** to their requests by transaction ID and nonce.
@@ -125,9 +135,11 @@ certificate, because the answer is encrypted for the signer certificate.
   delay a server can ask for.
 * **Errors inside the CA** are answered with HTTP 500 and logged, so the client retries instead of
   treating the transaction as refused. Internal error text never reaches the client.
+<!-- --8<-- [end:security-defaults] -->
 
 ## Compatibility
 
+<!-- --8<-- [start:compatibility] -->
 The client copes with server behavior that RFC 8894 does not require:
 
 * A CertRep without a senderNonce or without the signer certificate.
@@ -163,6 +175,7 @@ The Interop workflow runs these peers on every change:
 | micromdm/scep v2.3.0 client | Against the handler: enrollment with a challenge password |
 | micromdm/scep v2.3.0 server | The client enrolls, and a wrong challenge password is refused |
 | EJBCA CE 9.6.3 server | The client fetches the CA chain and enrolls. A used, wrong or missing password is refused |
+<!-- --8<-- [end:compatibility] -->
 
 ## Documentation
 
@@ -177,6 +190,7 @@ describes every exported type and option. Repository files:
 
 ## Limitations
 
+<!-- --8<-- [start:limitations] -->
 * **Both ends need RSA keys for encryption.** Requests are encrypted for an RSA CA or RA
   certificate and answers for the request signer certificate, with RSA key transport as RFC 8894
   requires. The handler answers a request signed with another key type with badAlg and the cause
@@ -190,9 +204,11 @@ describes every exported type and option. Repository files:
   switches to them.
 * **No AES-GCM or AuthEnvelopedData.**
 * **Retry-After** is read in seconds. HTTP dates are ignored.
+<!-- --8<-- [end:limitations] -->
 
 ## Credits
 
+<!-- --8<-- [start:credits] -->
 go-pki-scep continues the work of these projects and their contributors:
 
 * [micromdm/scep](https://github.com/micromdm/scep), the original implementation by Victor
@@ -200,8 +216,9 @@ go-pki-scep continues the work of these projects and their contributors:
 * [smallstep/scep](https://github.com/smallstep/scep), the Smallstep fork of the message layer
   this repository started from.
 
-Both are MIT licensed. [NOTICE](NOTICE) records the origins of the code, including the Go standard
-library code in `x509util`.
+Both are MIT licensed. [NOTICE](https://github.com/misiektoja/go-pki-scep/blob/main/NOTICE) records
+the origins of the code, including the Go standard library code in `x509util`.
+<!-- --8<-- [end:credits] -->
 
 ## Support
 
