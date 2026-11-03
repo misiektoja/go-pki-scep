@@ -24,18 +24,18 @@ make test
 
 `make interop` runs sscep and the micromdm/scep tools against the module. Each test skips when its tool is missing, and [the Interop workflow](.github/workflows/interop.yml) shows how CI builds them. Point `SSCEP` and `MICROMDM_SCEPCLIENT` at the binaries, or set `SCEP_INTEROP_MICROMDM_URL` and `SCEP_INTEROP_MICROMDM_CHALLENGE` for a running micromdm/scep server.
 
-Protocol changes need negative tests and an RFC citation. A parser or handler change also needs a fuzz run, and a crash the fuzzer finds stays in `testdata/fuzz` as a regression input. Interoperability claims need evidence naming the peer and its version. User-facing behavior changes update the Go doc comments, the README and [CHANGELOG.md](CHANGELOG.md).
+Protocol changes need negative tests and an RFC citation. A parser or handler change also needs a fuzz run, and a crash the fuzzer finds stays in `testdata/fuzz` as a regression input. Interoperability claims need evidence naming the peer and its version. User-facing behavior changes update the Go doc comments, the pages under `docs/` and [CHANGELOG.md](CHANGELOG.md).
 
 ## Documentation site
 
-The site at [misiektoja.github.io/go-pki-scep](https://misiektoja.github.io/go-pki-scep/) is built with MkDocs and the Material theme from `docs/` and `mkdocs.yml`. Its pages include the README sections between the `--8<--` markers, so edit those sections in the README. Set `PYTHON` when the MkDocs toolchain lives in a virtual environment:
+The site at [misiektoja.github.io/go-pki-scep](https://misiektoja.github.io/go-pki-scep/) is built with MkDocs and the Material theme from `docs/` and `mkdocs.yml`. Pages include code from `examples/quickstart` and from `Example` in `example_test.go` through `--8<--` snippet markers, so `make test` compiles and runs the code the site shows. Keep the marker comments when you edit those files. Set `PYTHON` when the MkDocs toolchain lives in a virtual environment:
 
 ```bash
 make docs-deps PYTHON=.venv/bin/python
 make docs-serve PYTHON=.venv/bin/python
 ```
 
-`make docs-build` runs with `--strict`, so a broken link, a missing anchor or a page absent from the navigation fails the build. Links in the included README sections must be absolute, because a relative link such as `CHANGELOG.md` does not resolve on the site. The [documentation workflow](.github/workflows/docs.yml) runs the same build on every change to the documentation and publishes the site from `main` to the `gh-pages` branch.
+`make docs-build` runs with `--strict`, so a broken link, a missing anchor or a page absent from the navigation fails the build. The [documentation workflow](.github/workflows/docs.yml) runs the same build on every change to the documentation and publishes the site from `main` to the `gh-pages` branch.
 
 The toolchain is pinned with hashes in `docs/requirements.txt`, which `make docs-deps` installs in hash-checking mode. The direct dependencies live in `docs/requirements.in`. To change a version, edit that file and run `make docs-requirements`, which needs pip-tools in the `PYTHON` environment.
 

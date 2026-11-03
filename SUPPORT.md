@@ -1,8 +1,13 @@
 # Getting help
 
-Start with the [documentation site](https://misiektoja.github.io/go-pki-scep/) or the
-[README](README.md), which cover the supported operations, the security defaults and the server
-behavior the client copes with. The package documentation on
+Start with the [documentation site](https://misiektoja.github.io/go-pki-scep/).
+[Getting started](https://misiektoja.github.io/go-pki-scep/getting-started/) runs a local server
+and client. The server and client guides cover implementing a CA, pending requests, enrollment,
+trust in the CA certificates and retries.
+[Troubleshooting](https://misiektoja.github.io/go-pki-scep/operations/troubleshooting/) maps
+refusals and errors to their causes.
+[Tested implementations](https://misiektoja.github.io/go-pki-scep/interoperability/tested-implementations/)
+names the SCEP peers the module runs against. The package documentation on
 [pkg.go.dev](https://pkg.go.dev/github.com/misiektoja/go-pki-scep) describes every exported type.
 
 ## Check your setup first
