@@ -8,28 +8,23 @@
 [![Supply chain](https://github.com/misiektoja/go-pki-scep/actions/workflows/supply-chain.yml/badge.svg?branch=main)](https://github.com/misiektoja/go-pki-scep/actions/workflows/supply-chain.yml)
 [![OpenSSF Scorecard](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.scorecard.dev%2Fprojects%2Fgithub.com%2Fmisiektoja%2Fgo-pki-scep&query=%24.score&label=openssf%20scorecard&style=flat-square)](https://scorecard.dev/viewer/?uri=github.com/misiektoja/go-pki-scep)
 
-<!-- --8<-- [start:intro] -->
-go-pki-scep is a Go implementation of the Simple Certificate Enrollment Protocol
-(SCEP, RFC 8894), the protocol routers, VPN gateways, mobile device managers and other network
-devices use to request certificates from a CA. It has three packages:
+go-pki-scep is a Go implementation of the Simple Certificate Enrollment Protocol (SCEP,
+RFC 8894). Routers, VPN gateways, mobile device managers and other network devices use SCEP to
+request certificates from a CA. The module has three packages:
 
-* `scep` builds and parses the SCEP messages.
-* `scepserver` is an HTTP handler that serves SCEP for a CA you implement.
-* `scepclient` enrolls, renews, polls and queries a SCEP server.
+* `scep` builds and parses SCEP messages and answers requests without any transport.
+* `scepserver` is an `http.Handler` that serves SCEP for a CA you implement.
+* `scepclient` enrolls, renews, polls and queries a SCEP server over HTTP.
 
-The CMS layer comes from [go-pkcs7](https://github.com/misiektoja/go-pkcs7). Algorithm choices are
-made per call through option structs. Nothing is configured through package variables.
-<!-- --8<-- [end:intro] -->
-
-The documentation is at [misiektoja.github.io/go-pki-scep](https://misiektoja.github.io/go-pki-scep/).
+The library handles message signatures and encryption, nonces, transaction IDs and the HTTP
+operations. Your code decides who may enroll, issues the certificates and keeps the state of the
+CA. The CMS layer comes from [go-pkcs7](https://github.com/misiektoja/go-pkcs7).
 
 ## Contents
 
 * [Install](#install)
 * [Scope](#scope)
 * [Getting started](#getting-started)
-* [Security defaults](#security-defaults)
-* [Compatibility](#compatibility)
 * [Documentation](#documentation)
 * [Limitations](#limitations)
 * [Credits](#credits)
@@ -38,152 +33,72 @@ The documentation is at [misiektoja.github.io/go-pki-scep](https://misiektoja.gi
 
 ## Install
 
-<!-- --8<-- [start:install] -->
 ```bash
 go get github.com/misiektoja/go-pki-scep
 ```
 
-The module needs Go 1.27.3 or newer. Its only dependency is go-pkcs7. The API may still change
-before v1.0.0, as
-[CHANGELOG.md](https://github.com/misiektoja/go-pki-scep/blob/main/CHANGELOG.md) records.
-<!-- --8<-- [end:install] -->
+The module needs Go 1.27.3 or newer. Its only dependency is go-pkcs7.
 
 ## Scope
 
-<!-- --8<-- [start:scope] -->
 | Operation | Server handler | Client |
 | --- | --- | --- |
-| GetCACaps | Lists the capabilities, derived from the options or replaced by them | Fetched once and used to pick POST, the digest and the cipher |
-| GetCACert | One DER certificate, or the CA and RA certificates in a certificate-only message | Sorts the answer into the CA, the encryption recipients and the allowed CertRep signers |
-| GetNextCACert | The next CA certificates, signed by the current CA or RA, when the CA implements it | Verifies the signature against the current certificates |
-| GetCACertChain | The CA certificate and its issuers up to the root in a certificate-only message, when the CA implements it | Returns the chain in server order |
-| PKIOperation over GET and POST | Both, with a size limit | POST when the server lists POSTPKIOperation, GET otherwise |
-| PKCSReq, RenewalReq and UpdateReq | Passed to the CA, which issues, keeps the request pending or refuses it | `Enroll` sends PKCSReq and RenewalReq |
-| CertPoll | Passed to the CA | `Poll`, and `EnrollAndWait`, which polls while the answer is PENDING |
-| GetCert and GetCRL | Passed to the CA when it implements them | `GetCert` and `GetCRL` |
+| GetCACaps and GetCACert | Yes | Yes |
+| PKCSReq and RenewalReq | Passed to the CA, which issues, keeps the request pending or refuses it | `Enroll` and `EnrollAndWait` |
+| UpdateReq | Passed to the CA | Message layer only |
+| CertPoll | Passed to the CA | `Poll` |
+| GetCert and GetCRL | When the CA implements them | `GetCert` and `GetCRL` |
+| GetNextCACert and GetCACertChain | When the CA implements them | `GetNextCACert` and `GetCACertChain` |
 
-The `scep` package handles every RFC 8894 message type in both directions: building and parsing
-requests, decrypting their content and answering with SUCCESS, PENDING or FAILURE.
-
-GetCACertChain is not part of RFC 8894. Some CAs still serve it for older clients. Its answer
-carries no RA certificates, so clients enroll with the GetCACert answer.
-<!-- --8<-- [end:scope] -->
+The `scep` package builds, parses and answers every RFC 8894 message type. sscep, the micromdm/scep
+client and server and EJBCA run against the module in CI, see
+[Tested implementations](https://misiektoja.github.io/go-pki-scep/interoperability/tested-implementations/).
+The API may still change before v1.0.0 as described in the
+[Compatibility policy](https://misiektoja.github.io/go-pki-scep/reference/compatibility/).
 
 ## Getting started
 
-<!-- --8<-- [start:getting-started] -->
 A server implements `scepserver.CA` and mounts the handler. The CA decides who may enroll, for
 example by checking the challenge password of a PKCSReq:
 
 ```go
 handler, err := scepserver.NewHandler(myCA, scepserver.Options{Logger: slog.Default()})
 if err != nil {
-	return err
+	log.Fatal(err)
 }
 http.Handle("/scep", handler)
 ```
 
-`Enroll` returns the issued certificate, `scepserver.ErrPending` to keep a request waiting for
-approval, a `*scepserver.Failure` to refuse it or a `*scepserver.Busy` to ask the client to come
-back later. The handler refuses some requests without the CA, such as one signed with an ECDSA key
-or encrypted with a cipher it does not accept. A CA that implements `scepserver.RefusalRecorder`
-is told about those as well.
+A device fetches the CA certificates with `GetCACert`, checks them against a fingerprint it trusts
+and enrolls with `EnrollAndWait` from `scepclient`.
 
-A client fetches the CA certificates, checks them against a fingerprint it trusts and enrolls:
-
-```go
-client, err := scepclient.New("https://ca.example.com/scep", scepclient.Options{})
-if err != nil {
-	return err
-}
-certs, err := client.GetCACert(ctx)
-if err != nil {
-	return err
-}
-// Compare certs.CA with a fingerprint obtained out of band before going further.
-res, err := client.EnrollAndWait(ctx, certs, scepclient.EnrollRequest{
-	CSR:               csr,
-	SignerCertificate: selfSigned,
-	SignerKey:         key,
-}, 30*time.Second)
-if err != nil {
-	return err
-}
-if res.Status != scep.SUCCESS {
-	return fmt.Errorf("enrollment refused: %s", res.FailInfo)
-}
-```
-
-A PKCSReq is signed with a self-signed certificate for the CSR key. A RenewalReq is signed with the
-certificate being renewed. `x509util.CreateCertificateRequest` adds the challenge password to a CSR.
-For a CSR with an ECDSA key, sign the PKCSReq with a separate RSA key and its self-signed
-certificate, because the answer is encrypted for the signer certificate.
-<!-- --8<-- [end:getting-started] -->
-
-## Security defaults
-
-<!-- --8<-- [start:security-defaults] -->
-* **CertRep signers** are restricted. The client accepts a CertRep only when one of the CA or RA
-  certificates from GetCACert signed it, even when the message carries its own certificate.
-* **Answers are matched** to their requests by transaction ID and nonce.
-* **Requester authorization** belongs to the CA. The handler verifies the signature and decrypts
-  the request, then passes the challenge password and the signer certificate to the CA.
-* **CSR signatures** are checked before the CA sees the request.
-* **Ciphers** default to AES-128-CBC. The handler and the client accept AES-CBC and DES-EDE3-CBC.
-  Single DES needs `Decrypt` in the options of either side. The handler answers with the request
-  cipher unless `Options.ContentEncryption` sets one.
-* **Digests** default to SHA-256. MD5 signatures are refused unless `AllowMD5` is set.
-* **Sizes are bounded**: messages on the server, response bodies on the client and the Retry-After
-  delay a server can ask for.
-* **Errors inside the CA** are answered with HTTP 500 and logged, so the client retries instead of
-  treating the transaction as refused. Internal error text never reaches the client.
-<!-- --8<-- [end:security-defaults] -->
-
-## Compatibility
-
-<!-- --8<-- [start:compatibility] -->
-The client copes with server behavior that RFC 8894 does not require:
-
-* A CertRep without a senderNonce or without the signer certificate.
-* A capability list that ends with a NUL byte.
-* An empty 200 OK for an operation the server does not support or for a missing CA name. The
-  client returns `ErrEmptyResponse`.
-* HTTP 503 without a Retry-After header, sent to throttle requests that arrive close together.
-  The client retries after `BusyDelay`, five seconds by default, and calls `Options.OnBusy` before
-  each wait. A busy GetCACaps answer is reported, not taken for a server without capabilities.
-* A PENDING or FAILURE CertRep sent with an HTTP error status, such as 202 or 400. The client
-  reads the CertRep of any answer typed `application/x-pki-message` and returns `HTTPError` for
-  other answers.
-* CertRep messages signed with SHA-1.
-* Answers encrypted with single DES whatever the request used, when `Options.Decrypt` allows it.
-* A GetCACert answer that holds an RA certificate and the root but not the issuing CA, as the
-  OpenXPKI sample configuration sends. `CACertificates.CA` is then the root, so a certificate
-  issued under an intermediate CA does not verify against it. Enrollment works, because the RA
-  certificate encrypts and signs.
-
-Some differences need a choice by the caller:
-
-* EJBCA Community Edition 9.6.3 lists `Renewal` but refuses a RenewalReq. Renew there with a
-  PKCSReq and a new challenge password.
-* A CA with an ECDSA or Ed25519 key needs an RSA RA certificate in its GetCACert answer. Without
-  one, `Enroll`, `Poll`, `GetCert` and `GetCRL` return `ErrNoRSARecipient` before they send a
-  request.
-
-The Interop workflow runs these peers on every change:
-
-| Peer | Direction |
-| --- | --- |
-| sscep v0.10.0 | Against the handler: getcaps, getca, enroll with polling, getcert and getcrl |
-| micromdm/scep v2.3.0 client | Against the handler: enrollment with a challenge password |
-| micromdm/scep v2.3.0 server | The client enrolls, and a wrong challenge password is refused |
-| EJBCA CE 9.6.3 server | The client fetches the CA chain and enrolls. A used, wrong or missing password is refused |
-<!-- --8<-- [end:compatibility] -->
+[Getting started](https://misiektoja.github.io/go-pki-scep/getting-started/) builds a local server
+and client in one file, enrolls and renews a certificate and names what to replace before
+production. That program is in [examples/quickstart](examples/quickstart/) and runs with
+`go run ./examples/quickstart`. The package example in `example_test.go` shows the message layer
+without HTTP.
 
 ## Documentation
 
-The documentation site at [misiektoja.github.io/go-pki-scep](https://misiektoja.github.io/go-pki-scep/)
-covers the scope, getting started, the security defaults, compatibility and the limitations. The
-package documentation on [pkg.go.dev](https://pkg.go.dev/github.com/misiektoja/go-pki-scep)
+Full documentation is at
+[misiektoja.github.io/go-pki-scep](https://misiektoja.github.io/go-pki-scep/).
+
+* [Getting started](https://misiektoja.github.io/go-pki-scep/getting-started/)
+* [Support matrix](https://misiektoja.github.io/go-pki-scep/support-matrix/)
+* [Architecture](https://misiektoja.github.io/go-pki-scep/architecture/)
+* [Implementing a CA](https://misiektoja.github.io/go-pki-scep/server/implementing-a-ca/)
+* [Pending requests and throttling](https://misiektoja.github.io/go-pki-scep/server/pending-requests/)
+* [Optional operations](https://misiektoja.github.io/go-pki-scep/server/optional-operations/)
+* [Refusals and logging](https://misiektoja.github.io/go-pki-scep/server/refusals-and-logging/)
+* [CA certificates and trust](https://misiektoja.github.io/go-pki-scep/client/ca-certificates/)
+* [Enrollment and renewal](https://misiektoja.github.io/go-pki-scep/client/enrollment/)
+* [Capabilities, answers and retries](https://misiektoja.github.io/go-pki-scep/client/answers-and-retries/)
+* [Message layer](https://misiektoja.github.io/go-pki-scep/message-layer/)
+* [Server options](https://misiektoja.github.io/go-pki-scep/reference/server-options/) and [Client options](https://misiektoja.github.io/go-pki-scep/reference/client-options/)
+* [Troubleshooting](https://misiektoja.github.io/go-pki-scep/operations/troubleshooting/)
+* [Security model](https://misiektoja.github.io/go-pki-scep/security/security-model/)
+
+The package documentation on [pkg.go.dev](https://pkg.go.dev/github.com/misiektoja/go-pki-scep)
 describes every exported type and option. Repository files:
 
 * [SUPPORT.md](SUPPORT.md) explains where to ask and what to include.
@@ -194,25 +109,18 @@ describes every exported type and option. Repository files:
 
 ## Limitations
 
-<!-- --8<-- [start:limitations] -->
-* **Both ends need RSA keys for encryption.** Requests are encrypted for an RSA CA or RA
-  certificate and answers for the request signer certificate, with RSA key transport as RFC 8894
-  requires. The handler answers a request signed with another key type with badAlg and the cause
-  `ErrSignerNotRSA`. RFC 8894 section 3.1 encrypts answers for such keys with the challenge
-  password through PasswordRecipientInfo, which go-pki-scep does not support. A CSR may still carry
-  an ECDSA key when an RSA certificate signs the request.
-* **No storage.** The CA implementation keeps pending requests, issued certificates and CRLs.
-* **No CA chain validation in the client.** The caller decides whether to trust the GetCACert
-  answer, such as by a pinned fingerprint.
-* **No automatic CA rollover.** `GetNextCACert` returns the next certificates and the caller
-  switches to them.
-* **No AES-GCM or AuthEnvelopedData.**
-* **Retry-After** is read in seconds. HTTP dates are ignored.
-<!-- --8<-- [end:limitations] -->
+* Requests and answers use RSA key transport, so a requester signs with an RSA key and a CA
+  without an RSA key needs an RSA RA certificate. A CSR may still carry an ECDSA key.
+  Password-based encryption of answers (PasswordRecipientInfo) is not supported.
+* No storage. The CA keeps pending requests, issued certificates and CRLs.
+* The client makes no trust decision about the GetCACert answer. The caller checks it, for
+  example against a pinned fingerprint.
+* No automatic CA rollover, AES-GCM or AuthEnvelopedData.
+
+[Known limitations](https://misiektoja.github.io/go-pki-scep/known-limitations/) explains each gap.
 
 ## Credits
 
-<!-- --8<-- [start:credits] -->
 go-pki-scep continues the work of these projects and their contributors:
 
 * [micromdm/scep](https://github.com/micromdm/scep), the original implementation by Victor
@@ -220,14 +128,15 @@ go-pki-scep continues the work of these projects and their contributors:
 * [smallstep/scep](https://github.com/smallstep/scep), the Smallstep fork of the message layer
   this repository started from.
 
-Both are MIT licensed. [NOTICE](https://github.com/misiektoja/go-pki-scep/blob/main/NOTICE) records
-the origins of the code, including the Go standard library code in `x509util`.
-<!-- --8<-- [end:credits] -->
+Both are MIT licensed. [NOTICE](NOTICE) records the origins of the code, including the Go standard
+library code in `x509util`.
 
 ## Support
 
 [SUPPORT.md](SUPPORT.md) directs usage questions, bug reports, feature requests and security
-reports.
+reports. Check
+[Troubleshooting](https://misiektoja.github.io/go-pki-scep/operations/troubleshooting/)
+and gather the versions, the failInfo or HTTP status and the server log before posting.
 
 ## License
 
