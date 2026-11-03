@@ -1,7 +1,8 @@
 # Getting help
 
-Start with the [README](README.md), which covers the supported operations, the security defaults
-and the server behavior the client copes with. The package documentation on
+Start with the [documentation site](https://misiektoja.github.io/go-pki-scep/) or the
+[README](README.md), which cover the supported operations, the security defaults and the server
+behavior the client copes with. The package documentation on
 [pkg.go.dev](https://pkg.go.dev/github.com/misiektoja/go-pki-scep) describes every exported type.
 
 ## Check your setup first

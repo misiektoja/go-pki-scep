@@ -21,6 +21,8 @@ The CMS layer comes from [go-pkcs7](https://github.com/misiektoja/go-pkcs7). Alg
 made per call through option structs. Nothing is configured through package variables.
 <!-- --8<-- [end:intro] -->
 
+The documentation is at [misiektoja.github.io/go-pki-scep](https://misiektoja.github.io/go-pki-scep/).
+
 ## Contents
 
 * [Install](#install)
@@ -179,7 +181,9 @@ The Interop workflow runs these peers on every change:
 
 ## Documentation
 
-The package documentation on [pkg.go.dev](https://pkg.go.dev/github.com/misiektoja/go-pki-scep)
+The documentation site at [misiektoja.github.io/go-pki-scep](https://misiektoja.github.io/go-pki-scep/)
+covers the scope, getting started, the security defaults, compatibility and the limitations. The
+package documentation on [pkg.go.dev](https://pkg.go.dev/github.com/misiektoja/go-pki-scep)
 describes every exported type and option. Repository files:
 
 * [SUPPORT.md](SUPPORT.md) explains where to ask and what to include.
