@@ -1,0 +1,2080 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A Go library for the Simple Certificate Enrollment Protocol (SCEP, RFC 8894) with the message layer, an HTTP server handler and an HTTP client">
+      
+      
+      
+        <link rel="canonical" href="https://misiektoja.github.io/go-pki-scep/getting-started/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../support-matrix/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
+    
+    
+      
+        <title>Getting started - go-pki-scep</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#getting-started" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="go-pki-scep" class="md-header__button md-logo" aria-label="go-pki-scep" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            go-pki-scep
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Getting started
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/misiektoja/go-pki-scep" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    misiektoja/go-pki-scep
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="go-pki-scep" class="md-nav__button md-logo" aria-label="go-pki-scep" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    go-pki-scep
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/misiektoja/go-pki-scep" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    misiektoja/go-pki-scep
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-need" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What you need
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-create-the-program" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: create the program
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-run-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: run it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-enroll-with-another-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: enroll with another client
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#before-production" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Before production
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../support-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Support matrix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Server guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../server/implementing-a-ca/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementing a CA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../server/pending-requests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pending requests and throttling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../server/optional-operations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Optional operations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../server/refusals-and-logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Refusals and logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Client guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Client guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../client/ca-certificates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CA certificates and trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../client/enrollment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Enrollment and renewal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../client/certificates-and-crls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Certificates and CRLs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../client/answers-and-retries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capabilities, answers and retries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../message-layer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Message layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/server-options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/client-options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Client options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Errors and status values
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compatibility policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interoperability
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Interoperability
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interoperability/tested-implementations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tested implementations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../operations/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Security
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/security-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release process
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../known-limitations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-need" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What you need
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-create-the-program" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: create the program
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-run-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: run it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-enroll-with-another-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: enroll with another client
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#before-production" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Before production
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="getting-started">Getting started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h1>
+<p>This page builds a SCEP server and a client in one Go program and then enrolls against the same
+server with an independent client. Each part of the program is a place where your own code goes
+later. The table after the program names the guide page for each one.</p>
+<p>The server keeps everything in memory and signs with a throwaway RSA CA that it creates at
+startup. It issues a certificate for every PKCSReq that carries the challenge password and for
+every RenewalReq signed with a certificate it issued. It serves plain HTTP on the loopback address.
+SCEP signs and encrypts each message, so the challenge password does not travel in clear text.</p>
+<h2 id="what-you-need">What you need<a class="headerlink" href="#what-you-need" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Go 1.27.3 or newer, the minimum the module declares</li>
+<li>Port 8080 free on 127.0.0.1 or another address passed with <code>-addr</code></li>
+<li>For step 3, <a href="https://misiektoja.github.io/certrally/">certrally</a> or another SCEP client</li>
+</ul>
+<h2 id="step-1-create-the-program">Step 1: create the program<a class="headerlink" href="#step-1-create-the-program" title="Permanent link">&para;</a></h2>
+<p>Create a module and add the library:</p>
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>scep-quickstart<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>scep-quickstart
+go<span class="w"> </span>mod<span class="w"> </span>init<span class="w"> </span>example.com/scep-quickstart
+go<span class="w"> </span>get<span class="w"> </span>github.com/misiektoja/go-pki-scep
+</code></pre></div>
+<p>The same program is in the repository as
+<a href="https://github.com/misiektoja/go-pki-scep/tree/main/examples/quickstart">examples/quickstart</a>,
+where <code>go run ./examples/quickstart</code> starts it without any setup. Save it as <code>main.go</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// A local SCEP server for trying go-pki-scep. A throwaway RSA CA checks a challenge password and is</span>
+<span class="c1">// served over HTTP. A client enrolls and renews against it.</span>
+<span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="s">"bytes"</span>
+<span class="w">    </span><span class="s">"context"</span>
+<span class="w">    </span><span class="s">"crypto/rand"</span>
+<span class="w">    </span><span class="s">"crypto/rsa"</span>
+<span class="w">    </span><span class="s">"crypto/sha256"</span>
+<span class="w">    </span><span class="s">"crypto/subtle"</span>
+<span class="w">    </span><span class="s">"crypto/x509"</span>
+<span class="w">    </span><span class="s">"crypto/x509/pkix"</span>
+<span class="w">    </span><span class="s">"errors"</span>
+<span class="w">    </span><span class="s">"flag"</span>
+<span class="w">    </span><span class="s">"fmt"</span>
+<span class="w">    </span><span class="s">"io"</span>
+<span class="w">    </span><span class="s">"log/slog"</span>
+<span class="w">    </span><span class="s">"math/big"</span>
+<span class="w">    </span><span class="s">"net"</span>
+<span class="w">    </span><span class="s">"net/http"</span>
+<span class="w">    </span><span class="s">"os"</span>
+<span class="w">    </span><span class="s">"os/signal"</span>
+<span class="w">    </span><span class="s">"slices"</span>
+<span class="w">    </span><span class="s">"time"</span>
+
+<span class="w">    </span><span class="nx">scep</span><span class="w"> </span><span class="s">"github.com/misiektoja/go-pki-scep"</span>
+<span class="w">    </span><span class="s">"github.com/misiektoja/go-pki-scep/scepclient"</span>
+<span class="w">    </span><span class="s">"github.com/misiektoja/go-pki-scep/scepserver"</span>
+<span class="w">    </span><span class="s">"github.com/misiektoja/go-pki-scep/x509util"</span>
+<span class="p">)</span>
+
+
+<span class="c1">// quickstartCA issues a certificate for every PKCSReq that carries the challenge password and for</span>
+<span class="c1">// every RenewalReq signed with a certificate it issued. It keeps nothing on disk.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">quickstartCA</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">cert</span><span class="w">     </span><span class="o">*</span><span class="nx">x509</span><span class="p">.</span><span class="nx">Certificate</span>
+<span class="w">    </span><span class="nx">key</span><span class="w">      </span><span class="o">*</span><span class="nx">rsa</span><span class="p">.</span><span class="nx">PrivateKey</span>
+<span class="w">    </span><span class="nx">password</span><span class="w"> </span><span class="kt">string</span>
+<span class="p">}</span>
+
+<span class="c1">// newQuickstartCA creates a self-signed RSA CA that lives as long as the process.</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">newQuickstartCA</span><span class="p">(</span><span class="nx">password</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">quickstartCA</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">key</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">rsa</span><span class="p">.</span><span class="nx">GenerateKey</span><span class="p">(</span><span class="nx">rand</span><span class="p">.</span><span class="nx">Reader</span><span class="p">,</span><span class="w"> </span><span class="mi">2048</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">template</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">x509</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">SerialNumber</span><span class="p">:</span><span class="w">          </span><span class="nx">randomSerial</span><span class="p">(),</span>
+<span class="w">        </span><span class="nx">Subject</span><span class="p">:</span><span class="w">               </span><span class="nx">pkix</span><span class="p">.</span><span class="nx">Name</span><span class="p">{</span><span class="nx">CommonName</span><span class="p">:</span><span class="w"> </span><span class="s">"go-pki-scep quickstart CA"</span><span class="p">},</span>
+<span class="w">        </span><span class="nx">NotBefore</span><span class="p">:</span><span class="w">             </span><span class="nx">time</span><span class="p">.</span><span class="nx">Now</span><span class="p">().</span><span class="nx">Add</span><span class="p">(</span><span class="o">-</span><span class="nx">time</span><span class="p">.</span><span class="nx">Hour</span><span class="p">),</span>
+<span class="w">        </span><span class="nx">NotAfter</span><span class="p">:</span><span class="w">              </span><span class="nx">time</span><span class="p">.</span><span class="nx">Now</span><span class="p">().</span><span class="nx">Add</span><span class="p">(</span><span class="mi">30</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">24</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Hour</span><span class="p">),</span>
+<span class="w">        </span><span class="nx">IsCA</span><span class="p">:</span><span class="w">                  </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">BasicConstraintsValid</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">        </span><span class="c1">// The CA key signs CertRep messages and decrypts requests, so it needs both usages.</span>
+<span class="w">        </span><span class="nx">KeyUsage</span><span class="p">:</span><span class="w"> </span><span class="nx">x509</span><span class="p">.</span><span class="nx">KeyUsageCertSign</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">x509</span><span class="p">.</span><span class="nx">KeyUsageCRLSign</span><span class="w"> </span><span class="o">|</span>
+<span class="w">            </span><span class="nx">x509</span><span class="p">.</span><span class="nx">KeyUsageDigitalSignature</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">x509</span><span class="p">.</span><span class="nx">KeyUsageKeyEncipherment</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">der</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">x509</span><span class="p">.</span><span class="nx">CreateCertificate</span><span class="p">(</span><span class="nx">rand</span><span class="p">.</span><span class="nx">Reader</span><span class="p">,</span><span class="w"> </span><span class="nx">template</span><span class="p">,</span><span class="w"> </span><span class="nx">template</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">key</span><span class="p">.</span><span class="nx">PublicKey</span><span class="p">,</span><span class="w"> </span><span class="nx">key</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">cert</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">x509</span><span class="p">.</span><span class="nx">ParseCertificate</span><span class="p">(</span><span class="nx">der</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">quickstartCA</span><span class="p">{</span><span class="nx">cert</span><span class="p">:</span><span class="w"> </span><span class="nx">cert</span><span class="p">,</span><span class="w"> </span><span class="nx">key</span><span class="p">:</span><span class="w"> </span><span class="nx">key</span><span class="p">,</span><span class="w"> </span><span class="nx">password</span><span class="p">:</span><span class="w"> </span><span class="nx">password</span><span class="p">},</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// CACertificates answers GetCACert with the CA certificate for any CA name.</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">ca</span><span class="w"> </span><span class="o">*</span><span class="nx">quickstartCA</span><span class="p">)</span><span class="w"> </span><span class="nx">CACertificates</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">([]</span><span class="o">*</span><span class="nx">x509</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">[]</span><span class="o">*</span><span class="nx">x509</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">{</span><span class="nx">ca</span><span class="p">.</span><span class="nx">cert</span><span class="p">},</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// Responder returns the CA identity when the request is encrypted for the CA certificate.</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">ca</span><span class="w"> </span><span class="o">*</span><span class="nx">quickstartCA</span><span class="p">)</span><span class="w"> </span><span class="nx">Responder</span><span class="p">(</span><span class="nx">_</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">recipient</span><span class="w"> </span><span class="nx">scep</span><span class="p">.</span><span class="nx">IssuerAndSerial</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">scepserver</span><span class="p">.</span><span class="nx">Responder</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="nx">bytes</span><span class="p">.</span><span class="nx">Equal</span><span class="p">(</span><span class="nx">recipient</span><span class="p">.</span><span class="nx">Issuer</span><span class="p">,</span><span class="w"> </span><span class="nx">ca</span><span class="p">.</span><span class="nx">cert</span><span class="p">.</span><span class="nx">RawIssuer</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">recipient</span><span class="p">.</span><span class="nx">SerialNumber</span><span class="p">.</span><span class="nx">Cmp</span><span class="p">(</span><span class="nx">ca</span><span class="p">.</span><span class="nx">cert</span><span class="p">.</span><span class="nx">SerialNumber</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">scepserver</span><span class="p">.</span><span class="nx">ErrNotFound</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="c1">// The RSA CA key signs the answers and, as a crypto.Decrypter, decrypts the requests.</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">scepserver</span><span class="p">.</span><span class="nx">Responder</span><span class="p">{</span><span class="nx">SignerCertificate</span><span class="p">:</span><span class="w"> </span><span class="nx">ca</span><span class="p">.</span><span class="nx">cert</span><span class="p">,</span><span class="w"> </span><span class="nx">SignerKey</span><span class="p">:</span><span class="w"> </span><span class="nx">ca</span><span class="p">.</span><span class="nx">key</span><span class="p">},</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// Enroll authorizes a PKCSReq by its challenge password and a RenewalReq by its signer certificate.</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">ca</span><span class="w"> </span><span class="o">*</span><span class="nx">quickstartCA</span><span class="p">)</span><span class="w"> </span><span class="nx">Enroll</span><span class="p">(</span><span class="nx">_</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="w"> </span><span class="o">*</span><span class="nx">scepserver</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span><span class="w"> </span><span class="p">([]</span><span class="o">*</span><span class="nx">x509</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">msg</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">req</span><span class="p">.</span><span class="nx">Message</span>
+<span class="w">    </span><span class="k">switch</span><span class="w"> </span><span class="nx">msg</span><span class="p">.</span><span class="nx">MessageType</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="nx">scep</span><span class="p">.</span><span class="nx">PKCSReq</span><span class="p">:</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">subtle</span><span class="p">.</span><span class="nx">ConstantTimeCompare</span><span class="p">([]</span><span class="kt">byte</span><span class="p">(</span><span class="nx">msg</span><span class="p">.</span><span class="nx">ChallengePassword</span><span class="p">),</span><span class="w"> </span><span class="p">[]</span><span class="kt">byte</span><span class="p">(</span><span class="nx">ca</span><span class="p">.</span><span class="nx">password</span><span class="p">))</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">scepserver</span><span class="p">.</span><span class="nx">Failure</span><span class="p">{</span><span class="nx">Info</span><span class="p">:</span><span class="w"> </span><span class="nx">scep</span><span class="p">.</span><span class="nx">BadRequest</span><span class="p">,</span><span class="w"> </span><span class="nx">Err</span><span class="p">:</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="s">"wrong challenge password"</span><span class="p">)}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="k">default</span><span class="p">:</span>
+<span class="w">        </span><span class="c1">// A RenewalReq is signed with the certificate being renewed. A real CA also checks that the</span>
+<span class="w">        </span><span class="c1">// certificate is not revoked and that the CSR asks for the same subject.</span>
+<span class="w">        </span><span class="nx">signer</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">msg</span><span class="p">.</span><span class="nx">SignerCertificate</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">signer</span><span class="p">.</span><span class="nx">CheckSignatureFrom</span><span class="p">(</span><span class="nx">ca</span><span class="p">.</span><span class="nx">cert</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">scepserver</span><span class="p">.</span><span class="nx">Failure</span><span class="p">{</span><span class="nx">Info</span><span class="p">:</span><span class="w"> </span><span class="nx">scep</span><span class="p">.</span><span class="nx">BadRequest</span><span class="p">,</span><span class="w"> </span><span class="nx">Err</span><span class="p">:</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">"renewal signer: %w"</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="c1">// The handler refuses a signing-time outside the certificate validity, but that attribute is</span>
+<span class="w">        </span><span class="c1">// optional and set by the signer, so check the current time too.</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Now</span><span class="p">().</span><span class="nx">After</span><span class="p">(</span><span class="nx">signer</span><span class="p">.</span><span class="nx">NotAfter</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">scepserver</span><span class="p">.</span><span class="nx">Failure</span><span class="p">{</span><span class="nx">Info</span><span class="p">:</span><span class="w"> </span><span class="nx">scep</span><span class="p">.</span><span class="nx">BadRequest</span><span class="p">,</span><span class="w"> </span><span class="nx">Err</span><span class="p">:</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="s">"renewal signer expired"</span><span class="p">)}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">ca</span><span class="p">.</span><span class="nx">issue</span><span class="p">(</span><span class="nx">msg</span><span class="p">.</span><span class="nx">CSR</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// Poll refuses every CertPoll, because this CA never keeps a request pending.</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">ca</span><span class="w"> </span><span class="o">*</span><span class="nx">quickstartCA</span><span class="p">)</span><span class="w"> </span><span class="nx">Poll</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="nx">scepserver</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span><span class="w"> </span><span class="p">([]</span><span class="o">*</span><span class="nx">x509</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">scepserver</span><span class="p">.</span><span class="nx">Failure</span><span class="p">{</span><span class="nx">Info</span><span class="p">:</span><span class="w"> </span><span class="nx">scep</span><span class="p">.</span><span class="nx">BadCertID</span><span class="p">,</span><span class="w"> </span><span class="nx">Err</span><span class="p">:</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="s">"no pending request"</span><span class="p">)}</span>
+<span class="p">}</span>
+
+<span class="c1">// issue signs a one-day client certificate for the CSR key and returns it with the CA certificate.</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">ca</span><span class="w"> </span><span class="o">*</span><span class="nx">quickstartCA</span><span class="p">)</span><span class="w"> </span><span class="nx">issue</span><span class="p">(</span><span class="nx">csr</span><span class="w"> </span><span class="o">*</span><span class="nx">x509</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">)</span><span class="w"> </span><span class="p">([]</span><span class="o">*</span><span class="nx">x509</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">der</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">x509</span><span class="p">.</span><span class="nx">CreateCertificate</span><span class="p">(</span><span class="nx">rand</span><span class="p">.</span><span class="nx">Reader</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">x509</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">SerialNumber</span><span class="p">:</span><span class="w"> </span><span class="nx">randomSerial</span><span class="p">(),</span>
+<span class="w">        </span><span class="nx">Subject</span><span class="p">:</span><span class="w">      </span><span class="nx">csr</span><span class="p">.</span><span class="nx">Subject</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">NotBefore</span><span class="p">:</span><span class="w">    </span><span class="nx">time</span><span class="p">.</span><span class="nx">Now</span><span class="p">().</span><span class="nx">Add</span><span class="p">(</span><span class="o">-</span><span class="nx">time</span><span class="p">.</span><span class="nx">Minute</span><span class="p">),</span>
+<span class="w">        </span><span class="nx">NotAfter</span><span class="p">:</span><span class="w">     </span><span class="nx">time</span><span class="p">.</span><span class="nx">Now</span><span class="p">().</span><span class="nx">Add</span><span class="p">(</span><span class="mi">24</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Hour</span><span class="p">),</span>
+<span class="w">        </span><span class="nx">KeyUsage</span><span class="p">:</span><span class="w">     </span><span class="nx">x509</span><span class="p">.</span><span class="nx">KeyUsageDigitalSignature</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">x509</span><span class="p">.</span><span class="nx">KeyUsageKeyEncipherment</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">ExtKeyUsage</span><span class="p">:</span><span class="w">  </span><span class="p">[]</span><span class="nx">x509</span><span class="p">.</span><span class="nx">ExtKeyUsage</span><span class="p">{</span><span class="nx">x509</span><span class="p">.</span><span class="nx">ExtKeyUsageClientAuth</span><span class="p">},</span>
+<span class="w">    </span><span class="p">},</span><span class="w"> </span><span class="nx">ca</span><span class="p">.</span><span class="nx">cert</span><span class="p">,</span><span class="w"> </span><span class="nx">csr</span><span class="p">.</span><span class="nx">PublicKey</span><span class="p">,</span><span class="w"> </span><span class="nx">ca</span><span class="p">.</span><span class="nx">key</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">cert</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">x509</span><span class="p">.</span><span class="nx">ParseCertificate</span><span class="p">(</span><span class="nx">der</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">[]</span><span class="o">*</span><span class="nx">x509</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">{</span><span class="nx">cert</span><span class="p">,</span><span class="w"> </span><span class="nx">ca</span><span class="p">.</span><span class="nx">cert</span><span class="p">},</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+
+
+<span class="c1">// randomSerial returns a random 64-bit certificate serial number.</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">randomSerial</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="nx">big</span><span class="p">.</span><span class="nx">Int</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">serial</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">rand</span><span class="p">.</span><span class="nx">Int</span><span class="p">(</span><span class="nx">rand</span><span class="p">.</span><span class="nx">Reader</span><span class="p">,</span><span class="w"> </span><span class="nb">new</span><span class="p">(</span><span class="nx">big</span><span class="p">.</span><span class="nx">Int</span><span class="p">).</span><span class="nx">Lsh</span><span class="p">(</span><span class="nx">big</span><span class="p">.</span><span class="nx">NewInt</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="mi">64</span><span class="p">))</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">serial</span>
+<span class="p">}</span>
+
+<span class="c1">// server is the running SCEP server.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">server</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">url</span><span class="w">         </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">fingerprint</span><span class="w"> </span><span class="p">[</span><span class="mi">32</span><span class="p">]</span><span class="kt">byte</span>
+<span class="w">    </span><span class="nx">http</span><span class="w">        </span><span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Server</span>
+<span class="p">}</span>
+
+<span class="c1">// start serves SCEP for a new CA on addr under the path /scep.</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">start</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">addr</span><span class="p">,</span><span class="w"> </span><span class="nx">password</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">logs</span><span class="w"> </span><span class="nx">io</span><span class="p">.</span><span class="nx">Writer</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">server</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">ca</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">newQuickstartCA</span><span class="p">(</span><span class="nx">password</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">handler</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">scepserver</span><span class="p">.</span><span class="nx">NewHandler</span><span class="p">(</span><span class="nx">ca</span><span class="p">,</span><span class="w"> </span><span class="nx">scepserver</span><span class="p">.</span><span class="nx">Options</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">Logger</span><span class="p">:</span><span class="w"> </span><span class="nx">slog</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">slog</span><span class="p">.</span><span class="nx">NewTextHandler</span><span class="p">(</span><span class="nx">logs</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">)),</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">mux</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">http</span><span class="p">.</span><span class="nx">NewServeMux</span><span class="p">()</span>
+<span class="w">    </span><span class="nx">mux</span><span class="p">.</span><span class="nx">Handle</span><span class="p">(</span><span class="s">"/scep"</span><span class="p">,</span><span class="w"> </span><span class="nx">handler</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">listener</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="p">(</span><span class="o">&amp;</span><span class="nx">net</span><span class="p">.</span><span class="nx">ListenConfig</span><span class="p">{}).</span><span class="nx">Listen</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="s">"tcp"</span><span class="p">,</span><span class="w"> </span><span class="nx">addr</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">srv</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">server</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">url</span><span class="p">:</span><span class="w">         </span><span class="s">"http://"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">listener</span><span class="p">.</span><span class="nx">Addr</span><span class="p">().</span><span class="nx">String</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"/scep"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">fingerprint</span><span class="p">:</span><span class="w"> </span><span class="nx">sha256</span><span class="p">.</span><span class="nx">Sum256</span><span class="p">(</span><span class="nx">ca</span><span class="p">.</span><span class="nx">cert</span><span class="p">.</span><span class="nx">Raw</span><span class="p">),</span>
+<span class="w">        </span><span class="nx">http</span><span class="p">:</span><span class="w">        </span><span class="o">&amp;</span><span class="nx">http</span><span class="p">.</span><span class="nx">Server</span><span class="p">{</span><span class="nx">Handler</span><span class="p">:</span><span class="w"> </span><span class="nx">mux</span><span class="p">,</span><span class="w"> </span><span class="nx">ReadHeaderTimeout</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">},</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">go</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">srv</span><span class="p">.</span><span class="nx">http</span><span class="p">.</span><span class="nx">Serve</span><span class="p">(</span><span class="nx">listener</span><span class="p">)</span><span class="w"> </span><span class="p">}()</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">srv</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// close stops the server.</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">server</span><span class="p">)</span><span class="w"> </span><span class="nb">close</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">cancel</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">WithTimeout</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">(),</span><span class="w"> </span><span class="mi">5</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+<span class="w">    </span><span class="k">defer</span><span class="w"> </span><span class="nx">cancel</span><span class="p">()</span>
+<span class="w">    </span><span class="nx">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">http</span><span class="p">.</span><span class="nx">Shutdown</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="p">}</span>
+
+
+<span class="c1">// enrollAndRenew enrolls a new key with a PKCSReq and renews its certificate with a RenewalReq.</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">enrollAndRenew</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">serverURL</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">caFingerprint</span><span class="w"> </span><span class="p">[</span><span class="mi">32</span><span class="p">]</span><span class="kt">byte</span><span class="p">,</span><span class="w"> </span><span class="nx">password</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">out</span><span class="w"> </span><span class="nx">io</span><span class="p">.</span><span class="nx">Writer</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">cancel</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">WithTimeout</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Minute</span><span class="p">)</span>
+<span class="w">    </span><span class="k">defer</span><span class="w"> </span><span class="nx">cancel</span><span class="p">()</span>
+<span class="w">    </span><span class="nx">client</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">scepclient</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">serverURL</span><span class="p">,</span><span class="w"> </span><span class="nx">scepclient</span><span class="p">.</span><span class="nx">Options</span><span class="p">{})</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">ca</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">client</span><span class="p">.</span><span class="nx">GetCACert</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">checkCACertificates</span><span class="p">(</span><span class="nx">ca</span><span class="p">,</span><span class="w"> </span><span class="nx">caFingerprint</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">cert</span><span class="p">,</span><span class="w"> </span><span class="nx">key</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">enroll</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">client</span><span class="p">,</span><span class="w"> </span><span class="nx">ca</span><span class="p">,</span><span class="w"> </span><span class="nx">password</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintf</span><span class="p">(</span><span class="nx">out</span><span class="p">,</span><span class="w"> </span><span class="s">"Enrolled %s with serial %s\n"</span><span class="p">,</span><span class="w"> </span><span class="nx">cert</span><span class="p">.</span><span class="nx">Subject</span><span class="p">,</span><span class="w"> </span><span class="nx">cert</span><span class="p">.</span><span class="nx">SerialNumber</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">renewed</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">renew</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">client</span><span class="p">,</span><span class="w"> </span><span class="nx">ca</span><span class="p">,</span><span class="w"> </span><span class="nx">cert</span><span class="p">,</span><span class="w"> </span><span class="nx">key</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintf</span><span class="p">(</span><span class="nx">out</span><span class="p">,</span><span class="w"> </span><span class="s">"Renewed %s with serial %s\n"</span><span class="p">,</span><span class="w"> </span><span class="nx">renewed</span><span class="p">.</span><span class="nx">Subject</span><span class="p">,</span><span class="w"> </span><span class="nx">renewed</span><span class="p">.</span><span class="nx">SerialNumber</span><span class="p">)</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+
+
+
+<span class="c1">// checkCACertificates trusts a GetCACert answer only when the CA certificate has the fingerprint</span>
+<span class="c1">// obtained out of band and every certificate that signs or decrypts for it was issued by that CA.</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">checkCACertificates</span><span class="p">(</span><span class="nx">ca</span><span class="w"> </span><span class="o">*</span><span class="nx">scepclient</span><span class="p">.</span><span class="nx">CACertificates</span><span class="p">,</span><span class="w"> </span><span class="nx">fingerprint</span><span class="w"> </span><span class="p">[</span><span class="mi">32</span><span class="p">]</span><span class="kt">byte</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">sha256</span><span class="p">.</span><span class="nx">Sum256</span><span class="p">(</span><span class="nx">ca</span><span class="p">.</span><span class="nx">CA</span><span class="p">.</span><span class="nx">Raw</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nx">fingerprint</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="s">"the CA certificate does not match the pinned fingerprint"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">cert</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">slices</span><span class="p">.</span><span class="nx">Concat</span><span class="p">(</span><span class="nx">ca</span><span class="p">.</span><span class="nx">Signers</span><span class="p">,</span><span class="w"> </span><span class="nx">ca</span><span class="p">.</span><span class="nx">Recipients</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">cert</span><span class="p">.</span><span class="nx">Equal</span><span class="p">(</span><span class="nx">ca</span><span class="p">.</span><span class="nx">CA</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">continue</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">cert</span><span class="p">.</span><span class="nx">CheckSignatureFrom</span><span class="p">(</span><span class="nx">ca</span><span class="p">.</span><span class="nx">CA</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">"RA certificate %s: %w"</span><span class="p">,</span><span class="w"> </span><span class="nx">cert</span><span class="p">.</span><span class="nx">Subject</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+
+
+
+<span class="c1">// enroll creates an RSA key and a CSR with the challenge password and enrolls it with a PKCSReq.</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">enroll</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">client</span><span class="w"> </span><span class="o">*</span><span class="nx">scepclient</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span><span class="w"> </span><span class="nx">ca</span><span class="w"> </span><span class="o">*</span><span class="nx">scepclient</span><span class="p">.</span><span class="nx">CACertificates</span><span class="p">,</span><span class="w"> </span><span class="nx">password</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">x509</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="nx">rsa</span><span class="p">.</span><span class="nx">PrivateKey</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">key</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">rsa</span><span class="p">.</span><span class="nx">GenerateKey</span><span class="p">(</span><span class="nx">rand</span><span class="p">.</span><span class="nx">Reader</span><span class="p">,</span><span class="w"> </span><span class="mi">2048</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">der</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">x509util</span><span class="p">.</span><span class="nx">CreateCertificateRequest</span><span class="p">(</span><span class="nx">rand</span><span class="p">.</span><span class="nx">Reader</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">x509util</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">Subject</span><span class="p">:</span><span class="w">           </span><span class="nx">pkix</span><span class="p">.</span><span class="nx">Name</span><span class="p">{</span><span class="nx">CommonName</span><span class="p">:</span><span class="w"> </span><span class="s">"quickstart-device"</span><span class="p">},</span>
+<span class="w">        </span><span class="nx">ChallengePassword</span><span class="p">:</span><span class="w"> </span><span class="nx">password</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span><span class="w"> </span><span class="nx">key</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">csr</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">x509</span><span class="p">.</span><span class="nx">ParseCertificateRequest</span><span class="p">(</span><span class="nx">der</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="c1">// A PKCSReq is signed with a self-signed certificate for the CSR key. The answer is encrypted</span>
+<span class="w">    </span><span class="c1">// for that certificate.</span>
+<span class="w">    </span><span class="nx">signer</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">selfSigned</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span><span class="w"> </span><span class="nx">csr</span><span class="p">.</span><span class="nx">Subject</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">res</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">client</span><span class="p">.</span><span class="nx">EnrollAndWait</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">ca</span><span class="p">,</span><span class="w"> </span><span class="nx">scepclient</span><span class="p">.</span><span class="nx">EnrollRequest</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">CSR</span><span class="p">:</span><span class="w">               </span><span class="nx">csr</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">SignerCertificate</span><span class="p">:</span><span class="w"> </span><span class="nx">signer</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">SignerKey</span><span class="p">:</span><span class="w">         </span><span class="nx">key</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span><span class="w"> </span><span class="mi">5</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">res</span><span class="p">.</span><span class="nx">Status</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nx">scep</span><span class="p">.</span><span class="nx">SUCCESS</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">"enrollment answered %s %s"</span><span class="p">,</span><span class="w"> </span><span class="nx">res</span><span class="p">.</span><span class="nx">Status</span><span class="p">,</span><span class="w"> </span><span class="nx">res</span><span class="p">.</span><span class="nx">FailInfo</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">res</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span><span class="w"> </span><span class="nx">key</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// selfSigned returns a short-lived self-signed certificate for key.</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">selfSigned</span><span class="p">(</span><span class="nx">key</span><span class="w"> </span><span class="o">*</span><span class="nx">rsa</span><span class="p">.</span><span class="nx">PrivateKey</span><span class="p">,</span><span class="w"> </span><span class="nx">subject</span><span class="w"> </span><span class="nx">pkix</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">x509</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">template</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">x509</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">SerialNumber</span><span class="p">:</span><span class="w"> </span><span class="nx">randomSerial</span><span class="p">(),</span>
+<span class="w">        </span><span class="nx">Subject</span><span class="p">:</span><span class="w">      </span><span class="nx">subject</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">NotBefore</span><span class="p">:</span><span class="w">    </span><span class="nx">time</span><span class="p">.</span><span class="nx">Now</span><span class="p">().</span><span class="nx">Add</span><span class="p">(</span><span class="o">-</span><span class="nx">time</span><span class="p">.</span><span class="nx">Hour</span><span class="p">),</span>
+<span class="w">        </span><span class="nx">NotAfter</span><span class="p">:</span><span class="w">     </span><span class="nx">time</span><span class="p">.</span><span class="nx">Now</span><span class="p">().</span><span class="nx">Add</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Hour</span><span class="p">),</span>
+<span class="w">        </span><span class="nx">KeyUsage</span><span class="p">:</span><span class="w">     </span><span class="nx">x509</span><span class="p">.</span><span class="nx">KeyUsageDigitalSignature</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">x509</span><span class="p">.</span><span class="nx">KeyUsageKeyEncipherment</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">der</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">x509</span><span class="p">.</span><span class="nx">CreateCertificate</span><span class="p">(</span><span class="nx">rand</span><span class="p">.</span><span class="nx">Reader</span><span class="p">,</span><span class="w"> </span><span class="nx">template</span><span class="p">,</span><span class="w"> </span><span class="nx">template</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">key</span><span class="p">.</span><span class="nx">PublicKey</span><span class="p">,</span><span class="w"> </span><span class="nx">key</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">x509</span><span class="p">.</span><span class="nx">ParseCertificate</span><span class="p">(</span><span class="nx">der</span><span class="p">)</span>
+<span class="p">}</span>
+
+
+
+<span class="c1">// renew requests a certificate for a new key with a RenewalReq signed by the current certificate.</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">renew</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">client</span><span class="w"> </span><span class="o">*</span><span class="nx">scepclient</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span><span class="w"> </span><span class="nx">ca</span><span class="w"> </span><span class="o">*</span><span class="nx">scepclient</span><span class="p">.</span><span class="nx">CACertificates</span><span class="p">,</span><span class="w"> </span><span class="nx">cert</span><span class="w"> </span><span class="o">*</span><span class="nx">x509</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span><span class="w"> </span><span class="nx">key</span><span class="w"> </span><span class="o">*</span><span class="nx">rsa</span><span class="p">.</span><span class="nx">PrivateKey</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">x509</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">newKey</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">rsa</span><span class="p">.</span><span class="nx">GenerateKey</span><span class="p">(</span><span class="nx">rand</span><span class="p">.</span><span class="nx">Reader</span><span class="p">,</span><span class="w"> </span><span class="mi">2048</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">der</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">x509</span><span class="p">.</span><span class="nx">CreateCertificateRequest</span><span class="p">(</span><span class="nx">rand</span><span class="p">.</span><span class="nx">Reader</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">x509</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">{</span><span class="nx">Subject</span><span class="p">:</span><span class="w"> </span><span class="nx">cert</span><span class="p">.</span><span class="nx">Subject</span><span class="p">},</span><span class="w"> </span><span class="nx">newKey</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">csr</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">x509</span><span class="p">.</span><span class="nx">ParseCertificateRequest</span><span class="p">(</span><span class="nx">der</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">res</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">client</span><span class="p">.</span><span class="nx">Enroll</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">ca</span><span class="p">,</span><span class="w"> </span><span class="nx">scepclient</span><span class="p">.</span><span class="nx">EnrollRequest</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">MessageType</span><span class="p">:</span><span class="w">       </span><span class="nx">scep</span><span class="p">.</span><span class="nx">RenewalReq</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">CSR</span><span class="p">:</span><span class="w">               </span><span class="nx">csr</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">SignerCertificate</span><span class="p">:</span><span class="w"> </span><span class="nx">cert</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">SignerKey</span><span class="p">:</span><span class="w">         </span><span class="nx">key</span><span class="p">,</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">res</span><span class="p">.</span><span class="nx">Status</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nx">scep</span><span class="p">.</span><span class="nx">SUCCESS</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">"renewal answered %s %s"</span><span class="p">,</span><span class="w"> </span><span class="nx">res</span><span class="p">.</span><span class="nx">Status</span><span class="p">,</span><span class="w"> </span><span class="nx">res</span><span class="p">.</span><span class="nx">FailInfo</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">res</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+
+
+<span class="c1">// run serves SCEP on addr, enrolls and renews once with the client and serves until ctx ends.</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">run</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">addr</span><span class="p">,</span><span class="w"> </span><span class="nx">password</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">out</span><span class="w"> </span><span class="nx">io</span><span class="p">.</span><span class="nx">Writer</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">srv</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">start</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">addr</span><span class="p">,</span><span class="w"> </span><span class="nx">password</span><span class="p">,</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nx">Stderr</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">defer</span><span class="w"> </span><span class="nx">srv</span><span class="p">.</span><span class="nb">close</span><span class="p">()</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">enrollAndRenew</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">srv</span><span class="p">.</span><span class="nx">url</span><span class="p">,</span><span class="w"> </span><span class="nx">srv</span><span class="p">.</span><span class="nx">fingerprint</span><span class="p">,</span><span class="w"> </span><span class="nx">password</span><span class="p">,</span><span class="w"> </span><span class="nx">out</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintf</span><span class="p">(</span><span class="nx">out</span><span class="p">,</span><span class="w"> </span><span class="s">"Serving %s with the challenge password %q.\n"</span><span class="p">,</span><span class="w"> </span><span class="nx">srv</span><span class="p">.</span><span class="nx">url</span><span class="p">,</span><span class="w"> </span><span class="nx">password</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintf</span><span class="p">(</span><span class="nx">out</span><span class="p">,</span><span class="w"> </span><span class="s">"CA certificate SHA-256 fingerprint: %x\n"</span><span class="p">,</span><span class="w"> </span><span class="nx">srv</span><span class="p">.</span><span class="nx">fingerprint</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintln</span><span class="p">(</span><span class="nx">out</span><span class="p">,</span><span class="w"> </span><span class="s">"Press Ctrl+C to stop."</span><span class="p">)</span>
+<span class="w">    </span><span class="o">&lt;-</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">Done</span><span class="p">()</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// main parses the flags and runs the server until it is interrupted.</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">addr</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">flag</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">"addr"</span><span class="p">,</span><span class="w"> </span><span class="s">"127.0.0.1:8080"</span><span class="p">,</span><span class="w"> </span><span class="s">"address to serve SCEP on"</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">password</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">flag</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">"challenge"</span><span class="p">,</span><span class="w"> </span><span class="s">"secret"</span><span class="p">,</span><span class="w"> </span><span class="s">"challenge password a PKCSReq must carry"</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">flag</span><span class="p">.</span><span class="nx">Parse</span><span class="p">()</span>
+<span class="w">    </span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">stop</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">signal</span><span class="p">.</span><span class="nx">NotifyContext</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">(),</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nx">Interrupt</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">run</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="nx">addr</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="nx">password</span><span class="p">,</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nx">Stdout</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">stop</span><span class="p">()</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintln</span><span class="p">(</span><span class="nx">os</span><span class="p">.</span><span class="nx">Stderr</span><span class="p">,</span><span class="w"> </span><span class="s">"quickstart:"</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
+<span class="w">        </span><span class="nx">os</span><span class="p">.</span><span class="nx">Exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Record the packages it imports in <code>go.mod</code>:</p>
+<div class="highlight"><pre><span></span><code>go<span class="w"> </span>mod<span class="w"> </span>tidy
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>What the quickstart does</th>
+<th>What replaces it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quickstartCA.Enroll</code></td>
+<td>Compares the challenge password with one fixed value and accepts a RenewalReq signed with any certificate it issued</td>
+<td>Your authorization policy, see <a href="../server/implementing-a-ca/">Implementing a CA</a></td>
+</tr>
+<tr>
+<td><code>quickstartCA.issue</code></td>
+<td>Signs a one-day client certificate with an in-memory key</td>
+<td>Your CA and its certificate profiles</td>
+</tr>
+<tr>
+<td><code>quickstartCA.Responder</code></td>
+<td>Signs answers and decrypts requests with the CA key</td>
+<td>The CA key or an RA, see <a href="../server/implementing-a-ca/#responders-and-ras">Implementing a CA</a></td>
+</tr>
+<tr>
+<td><code>quickstartCA.Poll</code></td>
+<td>Refuses every CertPoll, because nothing is ever pending</td>
+<td>A store of pending requests, see <a href="../server/pending-requests/">Pending requests and throttling</a></td>
+</tr>
+<tr>
+<td><code>checkCACertificates</code></td>
+<td>Pins a fingerprint the program knows because it created the CA</td>
+<td>A fingerprint distributed out of band, see <a href="../client/ca-certificates/">CA certificates and trust</a></td>
+</tr>
+<tr>
+<td><code>enroll</code> and <code>renew</code></td>
+<td>Enroll a new RSA key and renew its certificate</td>
+<td>The device side, see <a href="../client/enrollment/">Enrollment and renewal</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="step-2-run-it">Step 2: run it<a class="headerlink" href="#step-2-run-it" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>go<span class="w"> </span>run<span class="w"> </span>.
+</code></pre></div>
+<p>The program enrolls and renews once with the client, prints the server URL and the fingerprint of
+the CA certificate and keeps serving until you press Ctrl+C:</p>
+<div class="highlight"><pre><span></span><code>Enrolled CN=quickstart-device with serial 17480416376858012702
+Renewed CN=quickstart-device with serial 17122936644825487411
+Serving http://127.0.0.1:8080/scep with the challenge password "secret".
+CA certificate SHA-256 fingerprint: 9d46bf304ffba20208369bc0279776c6a97d06bc95b368abc42a8a165b4c22cb
+Press Ctrl+C to stop.
+</code></pre></div>
+<p>The handler logs every PKIOperation answer to standard error:</p>
+<div class="highlight"><pre><span></span><code>time=2026-11-03T15:06:53.661+01:00 level=INFO msg="scep request answered" message_type="PKCSReq (19)" transaction_id=b181e23f076b96349c0f9a7f5a2bd48c9166d0c0 status="SUCCESS (0)"
+time=2026-11-03T15:06:53.717+01:00 level=INFO msg="scep request answered" message_type="RenewalReq (17)" transaction_id=5cf166dc4765384224c6a14442b5beef4ed759ea status="SUCCESS (0)"
+</code></pre></div>
+<p>The serial numbers, the transaction IDs and the fingerprint change on every run, because the CA
+and the keys are created at startup. Ask the server for its capabilities:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span><span class="s1">'http://127.0.0.1:8080/scep?operation=GetCACaps'</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>AES
+DES3
+POSTPKIOperation
+Renewal
+SCEPStandard
+SHA-1
+SHA-256
+SHA-512
+</code></pre></div>
+<p><a href="../reference/server-options/#capabilities">Server options</a> explains how the handler derives this
+list.</p>
+<h2 id="step-3-enroll-with-another-client">Step 3: enroll with another client<a class="headerlink" href="#step-3-enroll-with-another-client" title="Permanent link">&para;</a></h2>
+<p>Leave the server running. In a second terminal, enroll with certrally. Replace <code>FINGERPRINT</code> with
+the fingerprint the server printed, so certrally refuses any other CA certificate:</p>
+<div class="highlight"><pre><span></span><code>certrally<span class="w"> </span>scep<span class="w"> </span>enroll<span class="w"> </span>--server<span class="w"> </span>http://127.0.0.1:8080/scep<span class="w"> </span>--fingerprint<span class="w"> </span>FINGERPRINT<span class="w"> </span>--challenge<span class="w"> </span>secret<span class="w"> </span>--subject<span class="w"> </span><span class="nv">CN</span><span class="o">=</span>device-1<span class="w"> </span>--cert-out<span class="w"> </span>device.pem<span class="w"> </span>--key-out<span class="w"> </span>device.key
+</code></pre></div>
+<p>Renew the certificate with a RenewalReq signed by it:</p>
+<div class="highlight"><pre><span></span><code>certrally<span class="w"> </span>scep<span class="w"> </span>renew<span class="w"> </span>--server<span class="w"> </span>http://127.0.0.1:8080/scep<span class="w"> </span>--fingerprint<span class="w"> </span>FINGERPRINT<span class="w"> </span>--cert<span class="w"> </span>device.pem<span class="w"> </span>--key<span class="w"> </span>device.key<span class="w"> </span>--cert-out<span class="w"> </span>device-new.pem<span class="w"> </span>--key-out<span class="w"> </span>device-new.key
+</code></pre></div>
+<p>A request with another challenge password gets a FAILURE answer with <code>badRequest</code>. The server log
+shows the cause, which is not sent to the client:</p>
+<div class="highlight"><pre><span></span><code>time=2026-11-03T15:06:54.157+01:00 level=INFO msg="scep request answered" message_type="PKCSReq (19)" transaction_id=B485DB38004DF987172810E833FB1BB48D72867B status="FAILURE (2)" fail_info="badRequest (2)" cause="wrong challenge password"
+</code></pre></div>
+<p>With <code>--key-type ecdsa-p256</code> certrally signs the request with a separate RSA key, because the
+answer is encrypted for the certificate that signed the request. The CA still issues the
+certificate for the ECDSA key in the CSR. These commands were checked by hand with certrally
+v0.4.2. CI does not run them.</p>
+<h2 id="before-production">Before production<a class="headerlink" href="#before-production" title="Permanent link">&para;</a></h2>
+<p>The quickstart leaves out what a real CA needs:</p>
+<ul>
+<li><strong>Authorization.</strong> One fixed challenge password lets anyone who knows it enroll any subject.
+  Issue one-time passwords per device and check the requested subject. Check that the certificate
+  that signs a RenewalReq is not revoked.</li>
+<li><strong>Keys.</strong> The CA key lives in memory. Keep it in your CA or an HSM. <code>Responder.SignerKey</code> is a
+  <code>crypto.Signer</code> and <code>Responder.DecrypterKey</code> a <code>crypto.Decrypter</code>, so neither has to leave the
+  device that holds it.</li>
+<li><strong>Trust distribution.</strong> Devices need the CA fingerprint before their first request, through
+  provisioning or an MDM profile.</li>
+<li><strong>Limits.</strong> The handler does not rate limit clients. Put middleware in front of it, as
+  <a href="../security/security-model/">Security model</a> describes.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Licensed under the MIT License
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "content.code.copy"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c21346df.min.js"></script>
+      
+    
+  </body>
+</html>
