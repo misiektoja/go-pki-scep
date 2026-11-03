@@ -29,6 +29,7 @@ import (
 	"github.com/misiektoja/go-pki-scep/internal/testca"
 	"github.com/misiektoja/go-pki-scep/scepclient"
 	"github.com/misiektoja/go-pki-scep/scepserver"
+	"github.com/misiektoja/go-pki-scep/x509util"
 )
 
 // testServer runs a scepserver handler for ca and records the HTTP methods of PKIOperation.
@@ -281,6 +282,47 @@ func TestRenewal(t *testing.T) {
 	renewal.MessageType = scep.GetCert
 	if _, err := client.Enroll(ctx, certs, renewal); err == nil {
 		t.Error("Enroll accepted a GetCert message type")
+	}
+}
+
+// TestEnrollECDSACSR covers a CSR with an ECDSA key in a PKCSReq signed with a separate RSA key
+// and its self-signed certificate, which the answer is encrypted for.
+func TestEnrollECDSACSR(t *testing.T) {
+	t.Parallel()
+	ca := testca.New(t, testca.Options{Password: "secret"})
+	ts := newTestServer(t, ca, scepserver.Options{})
+	client := newClient(t, ts.URL, scepclient.Options{})
+	ctx := t.Context()
+	certs, err := client.GetCACert(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	der, err := x509util.CreateCertificateRequest(rand.Reader, &x509util.CertificateRequest{
+		Subject:           pkix.Name{CommonName: "ec-device"},
+		ChallengePassword: "secret",
+	}, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	csr, err := x509.ParseCertificateRequest(der)
+	if err != nil {
+		t.Fatal(err)
+	}
+	signer := testca.NewRequester(t, "ec-device", "")
+	res, err := client.Enroll(ctx, certs, scepclient.EnrollRequest{
+		CSR:               csr,
+		SignerCertificate: signer.Certificate,
+		SignerKey:         signer.Key,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Status != scep.SUCCESS || !key.PublicKey.Equal(res.Certificate.PublicKey) {
+		t.Errorf("Enroll = %s, want SUCCESS for the ECDSA key", res.Status)
 	}
 }
 
