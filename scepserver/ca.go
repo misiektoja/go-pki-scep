@@ -79,7 +79,8 @@ type ChainGetter interface {
 // is not a request.
 type RefusalRecorder interface {
 	// RecordRefusal is called before the FAILURE answer is sent. The pkiEnvelope of req may not be
-	// decrypted, so its CSR and query fields can be empty. failure.Err holds the cause, such as
+	// decrypted, so req.Message.CSRReqMessage, PollRequest and CertificateID can be nil. Reading
+	// req.Message.CSR panics while CSRReqMessage is nil. failure.Err holds the cause, such as
 	// ErrSignerNotRSA.
 	RecordRefusal(ctx context.Context, req *Request, failure *Failure)
 }

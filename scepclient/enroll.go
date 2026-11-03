@@ -33,7 +33,8 @@ type EnrollRequest struct {
 	// with scep.CSRTransactionID, so Poll finds the same transaction without it.
 	TransactionID scep.TransactionID
 
-	// Digest is the signature digest. The zero value picks the strongest digest the server lists.
+	// Digest is the signature digest. The zero value picks SHA-256 when the server lists it or
+	// SCEPStandard. Otherwise it picks SHA-512, then SHA-1, then SHA-256 when the server lists none.
 	Digest crypto.Hash
 
 	// Encryption selects the content cipher and key transport. A zero cipher picks AES-128-CBC,
