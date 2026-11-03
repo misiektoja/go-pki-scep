@@ -26,6 +26,19 @@ make test
 
 Protocol changes need negative tests and an RFC citation. A parser or handler change also needs a fuzz run, and a crash the fuzzer finds stays in `testdata/fuzz` as a regression input. Interoperability claims need evidence naming the peer and its version. User-facing behavior changes update the Go doc comments, the README and [CHANGELOG.md](CHANGELOG.md).
 
+## Documentation site
+
+The site at [misiektoja.github.io/go-pki-scep](https://misiektoja.github.io/go-pki-scep/) is built with MkDocs and the Material theme from `docs/` and `mkdocs.yml`. Its pages include the README sections between the `--8<--` markers, so edit those sections in the README. Set `PYTHON` when the MkDocs toolchain lives in a virtual environment:
+
+```bash
+make docs-deps PYTHON=.venv/bin/python
+make docs-serve PYTHON=.venv/bin/python
+```
+
+`make docs-build` runs with `--strict`, so a broken link, a missing anchor or a page absent from the navigation fails the build. Links in the included README sections must be absolute, because a relative link such as `CHANGELOG.md` does not resolve on the site. The [documentation workflow](.github/workflows/docs.yml) runs the same build on every change to the documentation and publishes the site from `main` to the `gh-pages` branch.
+
+The toolchain is pinned with hashes in `docs/requirements.txt`, which `make docs-deps` installs in hash-checking mode. The direct dependencies live in `docs/requirements.in`. To change a version, edit that file and run `make docs-requirements`, which needs pip-tools in the `PYTHON` environment.
+
 ## Compatibility
 
 The module uses semantic versioning. Versions before v1.0.0 may change the API in a minor release. [CHANGELOG.md](CHANGELOG.md) describes every change that affects callers, including any that needs a code change.
