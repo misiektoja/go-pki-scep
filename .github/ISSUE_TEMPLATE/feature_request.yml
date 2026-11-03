@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        The [scope section](https://github.com/misiektoja/go-pki-scep/blob/main/README.md#scope) of the README lists the supported operations. The [limitations](https://github.com/misiektoja/go-pki-scep/blob/main/README.md#limitations) name what is left out on purpose.
+        The [support matrix](https://misiektoja.github.io/go-pki-scep/support-matrix/) lists the supported operations and algorithms. The [known limitations](https://misiektoja.github.io/go-pki-scep/known-limitations/) name what is left out on purpose.
 
   - type: textarea
     id: problem

@@ -19,7 +19,7 @@
 
 ## Documentation and changelog
 
-- [ ] User-facing behavior is documented in the Go doc comments and the README
+- [ ] User-facing behavior is documented in the Go doc comments and under `docs/`
 - [ ] `CHANGELOG.md` carries an entry, or the change is not user facing
 - [ ] A protocol change cites the RFC 8894 section and has a negative test
 
