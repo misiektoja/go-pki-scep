@@ -32,5 +32,5 @@ implement.
 
 ## Go version
 
-The module declares the minimum Go version in `go.mod`, currently 1.27.3. CI builds and tests with
+The module declares the minimum Go version in `go.mod`, currently 1.27.4. CI builds and tests with
 exactly that version.

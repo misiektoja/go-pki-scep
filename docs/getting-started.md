@@ -15,7 +15,7 @@ SCEP signs and encrypts each message, so the challenge password does not travel 
 
 ## What you need
 
-* Go 1.27.3 or newer, the minimum the module declares
+* Go 1.27.4 or newer, the minimum the module declares
 * Port 8080 free on 127.0.0.1 or another address passed with `-addr`
 * For step 3, [certrally](https://misiektoja.github.io/certrally/) or another SCEP client
 
