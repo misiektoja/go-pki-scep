@@ -1,3 +1,7 @@
+---
+description: "Fetch a certificate by issuer and serial number with GetCert or a CRL with GetCRL using the go-pki-scep SCEP client."
+---
+
 # Certificates and CRLs
 
 GetCert fetches a certificate by its issuer and serial number. GetCRL fetches the CRL that covers a

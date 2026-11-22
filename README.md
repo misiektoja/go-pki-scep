@@ -37,7 +37,7 @@ CA. The CMS layer comes from [go-pkcs7](https://github.com/misiektoja/go-pkcs7).
 go get github.com/misiektoja/go-pki-scep
 ```
 
-The module needs Go 1.27.3 or newer. Its only dependency is go-pkcs7.
+The module needs Go 1.27.4 or newer. Its only dependency is go-pkcs7.
 
 ## Scope
 

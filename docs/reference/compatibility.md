@@ -1,3 +1,7 @@
+---
+description: "Semantic versioning and API compatibility rules for the go-pki-scep Go module, what may change before v1.0.0 and the supported Go version."
+---
+
 # Compatibility policy
 
 The module uses semantic versioning. Its public API is every exported identifier of the `scep`,
@@ -28,5 +32,5 @@ implement.
 
 ## Go version
 
-The module declares the minimum Go version in `go.mod`, currently 1.27.3. CI builds and tests with
+The module declares the minimum Go version in `go.mod`, currently 1.27.4. CI builds and tests with
 exactly that version.

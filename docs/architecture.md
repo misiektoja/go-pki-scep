@@ -1,3 +1,7 @@
+---
+description: "How the scep, scepserver and scepclient packages of go-pki-scep fit together and how a pkiMessage travels through the handler and the client."
+---
+
 # Architecture
 
 go-pki-scep splits SCEP into a message layer and two HTTP packages built on it. The library owns

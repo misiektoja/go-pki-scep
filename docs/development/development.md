@@ -1,3 +1,7 @@
+---
+description: "Build, check and change go-pki-scep, with prerequisites, repository layout, common Make commands, documentation builds and continuous integration."
+---
+
 # Development
 
 How to build, check and change the library. Contribution rules are in

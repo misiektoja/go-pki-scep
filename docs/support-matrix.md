@@ -1,3 +1,7 @@
+---
+description: "Which SCEP operations, message types, algorithms and key types the go-pki-scep handler, client and message layer support."
+---
+
 # Support matrix
 
 What the handler, the client and the message layer support. [Known limitations](known-limitations.md)
@@ -59,7 +63,7 @@ RA certificate to decrypt requests.
 
 ## Go and platforms
 
-The module needs Go 1.27.3 or newer. CI tests every change on Linux and macOS with the Go version
+The module needs Go 1.27.4 or newer. CI tests every change on Linux and macOS with the Go version
 in `go.mod` and builds it on Windows.
 
 ## Interoperability

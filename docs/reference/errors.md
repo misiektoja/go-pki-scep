@@ -1,3 +1,7 @@
+---
+description: "SCEP pkiStatus and failInfo values, message types and the error values returned by the go-pki-scep server, client and message layer."
+---
+
 # Errors and status values
 
 ## Status values

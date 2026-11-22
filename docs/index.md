@@ -1,3 +1,8 @@
+---
+title: "SCEP client and server library for Go (RFC 8894)"
+description: "go-pki-scep is a Go library for the Simple Certificate Enrollment Protocol (SCEP) with a message layer, an HTTP server handler and an HTTP client."
+---
+
 # go-pki-scep
 
 go-pki-scep is a Go implementation of the Simple Certificate Enrollment Protocol (SCEP,
@@ -18,7 +23,7 @@ option structs. Nothing is configured through package variables.
 go get github.com/misiektoja/go-pki-scep
 ```
 
-The module needs Go 1.27.3 or newer. Its only dependency is go-pkcs7.
+The module needs Go 1.27.4 or newer. Its only dependency is go-pkcs7.
 
 ## Where to go next
 

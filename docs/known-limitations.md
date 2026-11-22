@@ -1,3 +1,7 @@
+---
+description: "Known limitations of go-pki-scep, including RSA-only encryption of requests, no built-in storage, no trust decisions in the client and no automatic CA rollover."
+---
+
 # Known limitations
 
 ## RSA keys for encryption

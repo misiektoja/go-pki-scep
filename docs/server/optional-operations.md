@@ -1,3 +1,7 @@
+---
+description: "Optional SCEP operations in go-pki-scep that the handler serves when your CA implements them: GetCert, GetCRL, GetNextCACert and GetCACertChain."
+---
+
 # Optional operations
 
 The handler checks whether the CA implements these interfaces and serves the matching operation

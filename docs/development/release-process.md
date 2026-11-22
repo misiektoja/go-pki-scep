@@ -1,3 +1,7 @@
+---
+description: "How a go-pki-scep release is made from a version tag, with versioning rules, release steps, release assets and the changelog format."
+---
+
 # Release process
 
 A release starts when a version tag reachable from `main` is pushed.
