@@ -1,3 +1,7 @@
+---
+description: "Security model of go-pki-scep: what a SCEP message protects, what the handler and client check, what your CA decides and the algorithm defaults."
+---
+
 # Security model
 
 This page states what the library checks, what it leaves to the code that embeds it and which

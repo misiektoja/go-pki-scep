@@ -1,3 +1,7 @@
+---
+description: "Reference of the go-pki-scep scepserver Options for scepserver.NewHandler with defaults, capabilities and the HTTP interface of the SCEP handler."
+---
+
 # Server options
 
 `scepserver.NewHandler(ca, opts)` returns the handler. The zero `Options` value is usable.

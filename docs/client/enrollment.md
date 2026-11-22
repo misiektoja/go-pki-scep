@@ -1,3 +1,7 @@
+---
+description: "Enroll and renew a device certificate with the go-pki-scep client using PKCSReq and RenewalReq, with a CSR, ECDSA keys and waiting for approval."
+---
+
 # Enrollment and renewal
 
 A device enrolls with a PKCSReq, waits while the CA keeps the request pending and later renews

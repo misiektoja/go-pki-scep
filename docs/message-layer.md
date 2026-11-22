@@ -1,3 +1,7 @@
+---
+description: "Build, parse and answer SCEP pkiMessages without HTTP using the go-pki-scep scep package, with a PKCSReq and CertRep example."
+---
+
 # Message layer
 
 The `scep` package builds, parses and answers pkiMessages without any transport. `scepserver` and

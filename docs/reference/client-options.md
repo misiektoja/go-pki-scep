@@ -1,3 +1,7 @@
+---
+description: "Reference of the go-pki-scep scepclient Options for scepclient.New with defaults, methods, request types and results."
+---
+
 # Client options
 
 `scepclient.New(serverURL, opts)` returns a client for one SCEP URL. The zero `Options` value is

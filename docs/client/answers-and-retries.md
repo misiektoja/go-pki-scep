@@ -1,3 +1,7 @@
+---
+description: "How the go-pki-scep client uses GetCACaps capabilities, picks algorithms, verifies SCEP answers and retries when the server is busy."
+---
+
 # Capabilities, answers and retries
 
 The client adapts each request to the capabilities the server lists, verifies every answer and

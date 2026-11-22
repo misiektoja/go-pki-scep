@@ -1,3 +1,7 @@
+---
+description: "Fix refused SCEP requests in go-pki-scep by matching the server symptom or client error to its cause. Then gather the logs and details you need."
+---
+
 # Troubleshooting
 
 Start with the handler log on the server side and the error text on the client side. The handler

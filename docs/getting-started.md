@@ -1,3 +1,7 @@
+---
+description: "Build a go-pki-scep SCEP server and client in one Go program and enroll with PKCSReq, then enroll again with an independent client."
+---
+
 # Getting started
 
 This page builds a SCEP server and a client in one Go program and then enrolls against the same

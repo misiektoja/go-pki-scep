@@ -1,3 +1,7 @@
+---
+description: "HTTP errors and FAILURE answers the go-pki-scep SCEP handler sends on its own, the log records it writes and how a CA learns about refusals."
+---
+
 # Refusals and logging
 
 The handler refuses some requests itself, before or instead of calling the CA. This page lists

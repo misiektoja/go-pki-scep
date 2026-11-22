@@ -1,3 +1,7 @@
+---
+description: "Implement the scepserver.CA interface in go-pki-scep to serve SCEP for your CA, with authorization, responders, RA certificates and mounting the handler."
+---
+
 # Implementing a CA
 
 The handler does the protocol work and calls your CA for every decision. A CA implements

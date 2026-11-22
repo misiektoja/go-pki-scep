@@ -1,3 +1,7 @@
+---
+description: "Fetch CA certificates with GetCACert in go-pki-scep and decide whether to trust them, including RA sorting, signer limits and CA rollover."
+---
+
 # CA certificates and trust
 
 Every request is encrypted for a CA or RA certificate. Every answer must be signed by one. A

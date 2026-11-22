@@ -1,3 +1,7 @@
+---
+description: "How go-pki-scep is tested with unit tests, fuzz targets for the parser and handler and interop runs against other SCEP implementations."
+---
+
 # Testing
 
 The library is tested at three levels. Each package has unit tests. Fuzz targets cover the parser

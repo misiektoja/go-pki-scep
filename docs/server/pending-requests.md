@@ -1,3 +1,7 @@
+---
+description: "Keep SCEP enrollments pending with ErrPending in go-pki-scep until a CertPoll is approved and slow down clients with the Busy answer."
+---
+
 # Pending requests and throttling
 
 A CA does not have to decide at once. It can keep an enrollment pending until an operator or a
