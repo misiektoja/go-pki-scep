@@ -63,7 +63,7 @@ RA certificate to decrypt requests.
 
 ## Go and platforms
 
-The module needs Go 1.27.3 or newer. CI tests every change on Linux and macOS with the Go version
+The module needs Go 1.27.4 or newer. CI tests every change on Linux and macOS with the Go version
 in `go.mod` and builds it on Windows.
 
 ## Interoperability

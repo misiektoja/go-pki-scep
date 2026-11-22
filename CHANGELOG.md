@@ -3,6 +3,26 @@
 Notable changes to go-pki-scep, a continuation of
 [smallstep/scep](https://github.com/smallstep/scep).
 
+## [0.1.1] - 2026-11-22
+
+The module now requires Go 1.27.4, which fixes a net/http vulnerability that the handler and the
+client reach.
+
+### Added
+- **`examples/quickstart`** runs a local SCEP server with a throwaway RSA CA that checks a
+  challenge password. A client enrolls and renews against it. Run `go run ./examples/quickstart`
+  from a clone.
+- **Package example** on pkg.go.dev builds a PKCSReq, answers it and reads the CertRep without HTTP.
+
+### Changed
+- **Go 1.27.4 or newer is required.** Go 1.27.3 has
+  [GO-2026-6859](https://pkg.go.dev/vuln/GO-2026-6859), a crash of the net/http HTTP/1 server.
+
+### Fixed
+- **The `EnrollRequest.Digest` and `RecordRefusal` doc comments** match the code. The zero `Digest`
+  picks SHA-256 when the server lists it or SCEPStandard. In `RecordRefusal` the CSR and query
+  fields can be nil and reading `req.Message.CSR` then panics.
+
 ## [0.1.0] - 2026-10-30
 
 First release as `github.com/misiektoja/go-pki-scep`. smallstep/scep has no tagged releases, so
